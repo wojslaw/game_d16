@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int const DICESIDES = 16;
-int const DEFAULT_ADDER = 1;
+int const DICESIDES = 0x10; //don't change this - many calculations depend on it
+int const DEFAULT_ADDER = 1; // the plan was to add 1, if the score succeeds, so that the lowest successful ratio is 2/16, instead of 1/16 // okay, it works now :]
 int const DEFAULT_SUCCESS_ADD = -4;
 int const DEFAULT_SUCCESS_MULTIPLY = 4;
 
@@ -21,16 +21,26 @@ struct ratio {
 };
 
 
+int
+calc_d16_score(
+		 int const add
+		,int const multiply
+		)
+{
+	return
+		add > 0
+		? ((DEFAULT_ADDER + add) * multiply)
+		: add;
+}
 
 Ratio ratio_d16_calc(
 		 int const success_multiply
 		,int const modifier) {
-	// multiplier = (success_multiply * (ADDER + success_add))
+	// multiplier = ( (ADDER + success_add)  *  success_multiply )
 	// divisor =  dice_sides
-	//printf("[[%d;%d]]", success_multiply, modifier);
 	Ratio r = {
-		.m = (DEFAULT_ADDER + modifier) * success_multiply ,
-		.d = DICESIDES
+		.m = calc_d16_score(modifier , success_multiply) ,
+		.d = DICESIDES ,
 	};
 	if( modifier  < 0) {
 		r.m = 0;
@@ -56,11 +66,14 @@ int d16_success_level(
 		: integer;
 }
 
-int d16_success_level_from_ratio(
-		 Ratio const &r )
+int calc_d16_success_level_from_score(
+		 int const score )
 {
-	int const integer   = (r.m / r.d);
-	int const remainder = (r.m % r.d);
+	if(score <= 0) {
+		return 0;
+	}
+	int const integer   = (score / DICESIDES);
+	int const remainder = (score % DICESIDES);
 	return
 		(remainder > 0)
 		? integer + 1
@@ -69,10 +82,14 @@ int d16_success_level_from_ratio(
 
 
 
+
+
 struct RollResult {
-	Ratio calc_ratio;
-	int diceroll;
 	int success_level;
+	int success_score; // maybe this should be storable as negatives? success_level of 0 should be enough
+	int diceroll;
+	int add;
+	int multiply;
 	RollResult();
 	RollResult(
 			 int const _diceroll
@@ -87,20 +104,24 @@ RollResult::RollResult(
 		,int const _success_add
 		,int const _success_multiply )
 {
-	//printf( "(((%d,%d,%d)))" ,_diceroll, _success_add ,_success_multiply );
+	add = _success_add;
+	multiply = _success_multiply;
 	diceroll = _diceroll;
-	calc_ratio = ratio_d16_calc(_success_multiply , _success_add + diceroll);
-	success_level = d16_success_level_from_ratio(calc_ratio);
+	success_score = calc_d16_score(_success_add + diceroll , _success_multiply );
+	success_level = calc_d16_success_level_from_score(success_score);
 }
 
 void
 print_rollresult(
 		const RollResult &rr)
 {
-	printf( "%d(d16:%#x;score:%#x)\n"
+	printf( "%d (s%2d;d 0x%x;a %d;m %d)\n"
 			,rr.success_level
+			,rr.success_score
 			,rr.diceroll
-			,rr.calc_ratio.multiplier);
+			,rr.add
+			,rr.multiply
+		  );
 }
 
 
@@ -121,18 +142,18 @@ int main(int argc, char * argv[]) {
 
 
 	int opt;
-	while ((opt = getopt(argc, argv, "a:d:")) != -1) {
+	while ((opt = getopt(argc, argv, "a:m:")) != -1) {
 		switch (opt) {
 			case 'a':
 				success_add = atoi(optarg);
 				success_add_set = 1;
 				break;
-			case 'd':
+			case 'm':
 				success_multiply = atoi(optarg);
 				success_multiply_set = 1;
 				break;
 			default: /* '?' */
-				fprintf(stderr, "Usage: %s [-a success_add] [-d success_multiply]\n",
+				fprintf(stderr, "Usage: %s [-a success_add] [-m success_multiply]\n",
 						argv[0]);
 				exit(EXIT_FAILURE);
 		}
@@ -144,15 +165,9 @@ int main(int argc, char * argv[]) {
 			,success_add, success_add_set
 			,d16_required_roll_for_success(success_add) );
 
-	Ratio arr_ratios[DICESIDES];
-	int arr_success_level[DICESIDES];
 	RollResult arr_rollresult[DICESIDES];
 	for( int i = 0; i < DICESIDES; ++i  ) {
 		printf("%2d " , i);
-		//arr_success_level[i] = d16_success_level( success_multiply , success_add + i );
-		//printf("%d " , arr_success_level[i]);
-		//arr_ratios[i] = ratio_d16_calc( success_multiply , success_add + i );
-		//ratio_print(arr_ratios[i]);
 		arr_rollresult[i] = RollResult( i , success_add , success_multiply );
 		print_rollresult(arr_rollresult[i]);
 	}
