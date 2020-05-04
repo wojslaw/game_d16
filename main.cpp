@@ -81,17 +81,6 @@ RollResult::RollResult(
 }
 
 
-//RollResult::RollResult(
-//		 int const _success_add
-//		,int const _success_multiply )
-//{
-//	int const roll = roll_d16();
-//	printf("[[%d %d %d]]" , roll , _success_add , _success_multiply);
-//	RollResult(
-//			 roll
-//			,_success_add
-//			,_success_multiply);
-//}
 
 
 void
