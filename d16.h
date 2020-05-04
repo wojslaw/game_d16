@@ -60,4 +60,4 @@ print_rollresult(
 
 int
 d16_required_roll_for_success(
-		int const modifier );
+		int const );
