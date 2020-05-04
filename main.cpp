@@ -7,19 +7,6 @@ int const DEFAULT_ADDER = 1; // the plan was to add 1, if the score succeeds, so
 int const DEFAULT_SUCCESS_ADD = -4;
 int const DEFAULT_SUCCESS_MULTIPLY = 4;
 
-typedef struct ratio Ratio;
-
-struct ratio {
-	union {
-		int m;
-		int multiplier;
-	};
-	union {
-		int d;
-		int divisor;
-	};
-};
-
 
 int
 calc_d16_score(
@@ -33,38 +20,6 @@ calc_d16_score(
 		: add;
 }
 
-Ratio ratio_d16_calc(
-		 int const success_multiply
-		,int const modifier) {
-	// multiplier = ( (ADDER + success_add)  *  success_multiply )
-	// divisor =  dice_sides
-	Ratio r = {
-		.m = calc_d16_score(modifier , success_multiply) ,
-		.d = DICESIDES ,
-	};
-	if( modifier  < 0) {
-		r.m = 0;
-	}
-	return r;
-}
-
-void
-ratio_print(Ratio const r) {
-	printf("%d/%d" , r.m , r.d);
-}
-
-
-int d16_success_level(
-		 int const base_level
-		,int const modifier) {
-	Ratio r = ratio_d16_calc(base_level, modifier);
-	int const integer   = (r.m / r.d);
-	int const remainder = (r.m % r.d);
-	return
-		(remainder > 0)
-		? integer + 1
-		: integer;
-}
 
 int calc_d16_success_level_from_score(
 		 int const score )
