@@ -22,6 +22,7 @@ struct RollResult {
 	int diceroll;
 	int add;
 	int multiply;
+	bool is_success() const { return (success_level > 0); }
 	RollResult() {}
 	RollResult(
 			 int const _diceroll
@@ -61,3 +62,5 @@ print_rollresult(
 int
 d16_required_roll_for_success(
 		int const );
+
+

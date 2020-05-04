@@ -12,6 +12,7 @@ struct Character {
 	int level_skill = 0;
 	int progres_skill = 0;
 	int progres_next = 1;
+	int resources = 10;
 	void print();
 	void add_progres(int const);
 };
@@ -19,11 +20,12 @@ struct Character {
 
 
 void Character::print() {
-	printf( "(t %d; k %d; p %d/%d)\n"
+	printf( "(t %d; k %d; p %d/%d; $ %d)\n"
 			,level_stat
 			,level_skill
 			,progres_skill
-			,progres_next );
+			,progres_next
+			,resources);
 }
 
 
@@ -49,23 +51,24 @@ Character::add_progres(int const delta_prog) {
 struct Action {
 	const char * name;
 	int modifier_difficulty;
+	int cost;
 };
 
 
 const Action
 TABLE_ACTION[] = {
-	{ "Trivial   " , 0 } ,
-	{ "Easy      " , -2 } ,
-	{ "Medium    " , -6 } ,
-	{ "Difficult " , -12 } ,
-	{ "Advanced  " , -20 } ,
+	{ "Trivial   " , 0   , 1 } ,
+	{ "Easy      " , -2  , 2 } ,
+	{ "Medium    " , -6  , 4 } ,
+	{ "Difficult " , -12 , 6 } ,
+	{ "Advanced  " , -20 , 8 } ,
 };
 size_t const SIZEOF_TABLE_ACTION = sizeof(TABLE_ACTION)/sizeof(TABLE_ACTION[0]);
 
 
 void
 print_action(const Action &a){
-	printf( "%s  %3d\n" , a.name , a.modifier_difficulty );
+	printf( "%s  %3d  %2d\n" , a.name , a.modifier_difficulty , a.cost );
 }
 
 void
@@ -107,6 +110,8 @@ int main(int argc, char * argv[]) {
 	player_character.print();
 	print_actions_table();
 	int sel , ret = 0;
+	int total_cost = 0;
+	int total_income = 0;
 	ret = scanf( "%d" , &sel );
 	while(
 			 (sel >= 0)
@@ -128,18 +133,35 @@ int main(int argc, char * argv[]) {
 			printf( "Impossible(required_roll>0x%x). Aborting action.\n"
 					, DICESIDES);
 		} else {
+			int const cost = TABLE_ACTION[sel].cost;
+			total_cost += cost;
+			player_character.resources -= cost;
 			printf( "roll:" );
 			const RollResult roll = RollResult( add , 1 );
 			print_rollresult( roll );
-			if( roll.success_level <= 0 ) {
+			if(  (roll.is_success()) ) {
+				int const income = ((2 + roll.success_level) * cost);
+				player_character.resources += income;
+				total_income += income;
+			} else {
 				player_character.add_progres( 1 );
+				player_character.print();
+			}
+			if( player_character.resources < 0 ) {
+				goto jump_end;
 			}
 		}
 
 		ret = scanf( "%d" , &sel );
 	}
 
-	exit(EXIT_SUCCESS);
+
+	printf( "\nGame ended\ntotal_cost=%d ; total_income = %d\n" , total_cost , total_income );
+
+jump_end:
+	if(player_character.resources < 0) {
+		printf( "You lost, because you went into negative money and failed to recover!\n" );
+	}
 }
 
 
