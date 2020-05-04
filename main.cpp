@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+
 int const DICESIDES = 0x10; //don't change this - many calculations depend on it
 int const DEFAULT_ADDER = 1; // the plan was to add 1, if the score succeeds, so that the lowest successful ratio is 2/16, instead of 1/16 // okay, it works now :]
 int const DEFAULT_SUCCESS_ADD = -4;
@@ -35,6 +36,11 @@ int calc_d16_success_level_from_score(
 		: integer;
 }
 
+int
+roll_d16(void)
+{
+	return (rand() % 16);
+}
 
 
 
@@ -50,6 +56,13 @@ struct RollResult {
 			 int const _diceroll
 			,int const _success_add
 			,int const _success_multiply );
+	RollResult(
+			int const _success_add
+			,int const _success_multiply )
+		: RollResult(
+				roll_d16()
+				,_success_add
+				,_success_multiply ) {}
 };
 
 RollResult::RollResult() { }
@@ -59,12 +72,27 @@ RollResult::RollResult(
 		,int const _success_add
 		,int const _success_multiply )
 {
+	printf("[[[[%d %d %d]]]]" , _diceroll, _success_add , _success_multiply);
 	add = _success_add;
 	multiply = _success_multiply;
 	diceroll = _diceroll;
 	success_score = calc_d16_score(_success_add + diceroll , _success_multiply );
 	success_level = calc_d16_success_level_from_score(success_score);
 }
+
+
+//RollResult::RollResult(
+//		 int const _success_add
+//		,int const _success_multiply )
+//{
+//	int const roll = roll_d16();
+//	printf("[[%d %d %d]]" , roll , _success_add , _success_multiply);
+//	RollResult(
+//			 roll
+//			,_success_add
+//			,_success_multiply);
+//}
+
 
 void
 print_rollresult(
@@ -89,7 +117,7 @@ int d16_required_roll_for_success(
 
 
 int main(int argc, char * argv[]) {
-
+	srand(0);
 	int success_multiply  = DEFAULT_SUCCESS_MULTIPLY;
 	int success_multiply_set = 0;
 	int success_add = DEFAULT_SUCCESS_ADD;
@@ -119,6 +147,10 @@ int main(int argc, char * argv[]) {
 			,success_multiply,  success_multiply_set
 			,success_add, success_add_set
 			,d16_required_roll_for_success(success_add) );
+	RollResult rr0 = RollResult(success_add , success_multiply);
+	print_rollresult(rr0);
+	RollResult rr1 = RollResult(roll_d16() , success_add , success_multiply);
+	print_rollresult(rr1);
 
 	RollResult arr_rollresult[DICESIDES];
 	for( int i = 0; i < DICESIDES; ++i  ) {
