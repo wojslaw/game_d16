@@ -49,30 +49,31 @@ Character::add_progres(int const delta_prog) {
 
 
 struct Action {
-	const char * name;
 	int modifier_difficulty;
 	int cost;
+	const char * name;
 };
 
 
 const Action
 TABLE_ACTION[] = {
-	{ "Trivial   " , 0   , 1 } ,
-	{ "Easy      " , -2  , 2 } ,
-	{ "Medium    " , -6  , 4 } ,
-	{ "Difficult " , -12 , 6 } ,
-	{ "Advanced  " , -20 , 8 } ,
+	{  0  , 1 ,  "Trivial"   ,  } ,
+	{ -2  , 2 ,  "Easy"      ,  } ,
+	{ -6  , 4 ,  "Medium"    ,  } ,
+	{ -12 , 6 ,  "Difficult" ,  } ,
+	{ -20 , 8 ,  "Advanced"  ,  } ,
 };
 size_t const SIZEOF_TABLE_ACTION = sizeof(TABLE_ACTION)/sizeof(TABLE_ACTION[0]);
 
 
 void
 print_action(const Action &a){
-	printf( "%s  %3d  %2d\n" , a.name , a.modifier_difficulty , a.cost );
+	printf( "%3d   %2d  %s\n" , a.modifier_difficulty , a.cost , a.name  );
 }
 
 void
 print_actions_table(void) {
+	printf( " id  diff  cost  Description\n" );
 	for(size_t i = 0;
 			i < SIZEOF_TABLE_ACTION;
 			++i) {
