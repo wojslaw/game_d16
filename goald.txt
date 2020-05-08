@@ -1,0 +1,14 @@
+Make a separate "demo_game(.cpp|.h)", where there will be a simple gathering/training skills textgame.
+
+
+
+
+
+
+
+
+1. Idea: Add 2 different multipliers:
+  1. score_multiplier( this is the multiplier that works currently )
+  2. success_level_multiplier( this will be multiplied times the success level, that is the value after rounding )
+
+hmm, now that I think of it - maybe this would be too much unnecessary complexity?

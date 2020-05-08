@@ -5,10 +5,6 @@
 
 #include "d16.h"
 
-// Add 2 different multipliers:
-//   1. score_multiplier( this is the multiplier that works currently )
-//   2. success_level_multiplier( this will be multiplied times the success level, that is the value after rounding )
-//   hmm, now that I think of it - maybe this would be too much unnecessary complexity?
 
 
 struct Character {
@@ -21,8 +17,6 @@ struct Character {
 	void add_progres(int const);
 };
 
-int const DEFAULT_SUCCESS_ADD = -4;
-int const DEFAULT_SUCCESS_MULTIPLY = 4;
 
 
 
