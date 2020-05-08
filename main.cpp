@@ -5,17 +5,24 @@
 
 #include "d16.h"
 
+// Add 2 different multipliers:
+//   1. score_multiplier( this is the multiplier that works currently )
+//   2. success_level_multiplier( this will be multiplied times the success level, that is the value after rounding )
+//   hmm, now that I think of it - maybe this would be too much unnecessary complexity?
 
 
 struct Character {
 	int level_stat = 0;
 	int level_skill = 0;
 	int progres_skill = 0;
-	int progres_next = 1;
+	int progres_next = 2;
 	int resources = 10;
 	void print();
 	void add_progres(int const);
 };
+
+int const DEFAULT_SUCCESS_ADD = -4;
+int const DEFAULT_SUCCESS_MULTIPLY = 4;
 
 
 
@@ -31,7 +38,7 @@ void Character::print() {
 
 int
 calc_progres_for_next_level(int const level) {
-	return (2 << level);
+	return (4 << (level/2));
 }
 
 
@@ -83,14 +90,130 @@ print_actions_table(void) {
 }
 
 
+enum weapon_type {
+	weapon_type_none ,
+	weapon_type_sword ,
+	weapon_type_axe ,
+	weapon_type_polearm ,
+	weapon_type_club ,
+	SIZEOF_STRINGTABLE_WEAPON_TYPE ,
+};
+
+const char *
+STRINGTABLE_WEAPON_TYPE[] = {
+	[weapon_type_none] = "[no_weapon_type]" ,
+	[weapon_type_sword] = "sword",
+	[weapon_type_axe] = "axe",
+	[weapon_type_polearm] = "polearm",
+	[weapon_type_club] = "club",
+};
+
+void
+display_table_weapon_type(FILE * f)
+{
+	for(int i = 0; i < SIZEOF_STRINGTABLE_WEAPON_TYPE; ++i) {
+		fprintf(f , "%d %s\n" , i , STRINGTABLE_WEAPON_TYPE[i] );
+	}
+}
+
+struct WeaponBase {
+	enum weapon_type type = weapon_type_none;
+	int required_strength = 0;
+	int required_dexterity = 0;
+	int required_wisdom = 0;
+	int to_hit = 0;
+	int range = 0;
+	int base_damage = 0;
+	const char * name = NULL;
+	void fprint(FILE * f) const;
+};
+
+
+void
+WeaponBase::fprint( FILE * f
+) const {
+	fprintf( f , "t %d rs %d rd %d rw %d th %d rng %d dmg %d"
+			, type
+			, required_strength
+			, required_dexterity
+			, required_wisdom
+			, to_hit
+			, range
+			, base_damage );
+	if( name ) {
+		fprintf( f , "%s", name );
+	}
+}
+
+
+const
+WeaponBase
+TABLE_WEAPON_BASE[] = {
+	{ .type=weapon_type_polearm , .range = 3, .base_damage = 6 , .name = "Spear" } ,
+	{ .type=weapon_type_sword   , .range = 1, .base_damage = 3 , .name = "Shortsword" } ,
+	{ .type=weapon_type_axe , .required_strength = 2 , .to_hit = -2 , .range = 1, .base_damage = 5 , .name = "Lumber Axe" } ,
+};
+size_t SIZEOF_TABLE_WEAPON_BASE (sizeof(TABLE_WEAPON_BASE)/sizeof(TABLE_WEAPON_BASE[0])) ;
+
+
+void
+display_table_weapon_base(FILE * f)
+{
+	for(size_t i = 0; i < SIZEOF_TABLE_WEAPON_BASE ; ++i ) {
+		fprintf(f , "%lu" , i );
+		TABLE_WEAPON_BASE[i].fprint(f);
+		fprintf(f , "\n" );
+	}
+}
+
+
+
+
+
+
+void
+display_list_of_all_tries(
+		FILE * f
+		,int const score_add
+		,int const score_multiply )
+{
+	fprintf( f ,"score_add=%d; required_for_score=%d\n"
+			,score_add
+			,d16_required_roll_for_success(score_add) );
+
+	RollResult arr_rollresult[DICESIDES];
+	for( int i = 0; i < DICESIDES; ++i  ) {
+		fprintf( f , "%2d " , i);
+		arr_rollresult[i] = RollResult( i , score_add , score_multiply );
+		print_rollresult(arr_rollresult[i]);
+	}
+}
+
+
+void
+display_debugish_thing(void) {
+	
+}
+
+
+
 int main(int argc, char * argv[]) {
 	srand(time(NULL));
 
 	struct Character player_character;
+	bool flag_display_list_of_all_tries = false;
+	int score_add = 0;
+	int score_multiply = 0;
 
 	int opt;
-	while ((opt = getopt(argc, argv, "t:k:p:")) != -1) {
+	while ((opt = getopt(argc, argv, "DBTt:k:p:M:A:")) != -1) {
 		switch (opt) {
+			case 'T':
+				display_table_weapon_type(stderr);
+				break;
+			case 'B':
+				display_table_weapon_base(stderr);
+				break;
 			case 't':
 				player_character.level_stat = atoi(optarg);
 				break;
@@ -100,6 +223,15 @@ int main(int argc, char * argv[]) {
 			case 'p':
 				player_character.progres_skill = atoi(optarg);
 				break;
+			case 'M':
+				score_multiply = atoi(optarg);
+				break;
+			case 'A':
+				score_add = atoi(optarg);
+				break;
+			case 'D':
+				flag_display_list_of_all_tries = true;
+				break;
 			default: /* '?' */
 				fprintf(stderr, "Usage: %s [-t stat] [-k skill] [-p progres]\n",
 						argv[0]);
@@ -107,6 +239,13 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
+	if(flag_display_list_of_all_tries) {
+		display_list_of_all_tries(
+				stdout
+				,score_add
+				,score_multiply);
+		exit(EXIT_SUCCESS);
+	}
 
 	player_character.print();
 	print_actions_table();
@@ -131,7 +270,7 @@ int main(int argc, char * argv[]) {
 				, add
 				, required_roll );
 		if( required_roll >= DICESIDES ) {
-			printf( "Impossible(required_roll>0x%x). Aborting action.\n"
+			printf( "Impossible(required_roll>=0x%x). Aborting action.\n"
 					, DICESIDES);
 		} else {
 			int const cost = TABLE_ACTION[sel].cost;
@@ -167,24 +306,3 @@ jump_end:
 
 
 
-void
-display_list_of_all_tries(
-		int const success_multiply  = DEFAULT_SUCCESS_MULTIPLY
-		,int const success_add = DEFAULT_SUCCESS_ADD )
-{
-	printf( "success_multiply=%2d; success_add=%d; required_for_success=%d\n"
-			,success_multiply
-			,success_add
-			,d16_required_roll_for_success(success_add) );
-	RollResult rr0 = RollResult(success_add , success_multiply);
-	print_rollresult(rr0);
-	RollResult rr1 = RollResult(roll_d16() , success_add , success_multiply);
-	print_rollresult(rr1);
-
-	RollResult arr_rollresult[DICESIDES];
-	for( int i = 0; i < DICESIDES; ++i  ) {
-		printf("%2d " , i);
-		arr_rollresult[i] = RollResult( i , success_add , success_multiply );
-		print_rollresult(arr_rollresult[i]);
-	}
-}

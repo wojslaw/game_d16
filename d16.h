@@ -6,8 +6,6 @@
 
 int const DICESIDES = 0x10; //don't change this - many calculations depend on it
 int const DEFAULT_ADDER = 1; // the plan was to add 1, if the score succeeds, so that the lowest successful ratio is 2/16, instead of 1/16 // okay, it works now :]
-int const DEFAULT_SUCCESS_ADD = -4;
-int const DEFAULT_SUCCESS_MULTIPLY = 4;
 
 
 
