@@ -1,6 +1,13 @@
 #pragma once
 #include "d16.h"
 
+void
+minigame_crafting(
+		 int const level_stat
+		,int const level_skill
+		,int const progres_skill
+		);
+
 
 struct Character {
 	int level_stat = 0;

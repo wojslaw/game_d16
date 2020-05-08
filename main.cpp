@@ -47,6 +47,11 @@ int main(int argc, char * argv[]) {
 	bool flag_display_list_of_all_tries = false;
 	int score_add = 0;
 	int score_multiply = 0;
+	struct {
+		int level_stat = 0 ;
+		int level_skill = 0;
+		int progres_skill = 0;
+	} minigame;
 
 	int opt;
 	while ((opt = getopt(argc, argv, "DBTt:k:p:M:A:")) != -1) {
@@ -58,13 +63,13 @@ int main(int argc, char * argv[]) {
 				display_table_weapon_base(stderr);
 				break;
 			case 't':
-				player_character.level_stat = atoi(optarg);
+				minigame.level_stat = atoi(optarg);
 				break;
 			case 'k':
-				player_character.level_skill = atoi(optarg);
+				minigame.level_skill = atoi(optarg);
 				break;
 			case 'p':
-				player_character.progres_skill = atoi(optarg);
+				minigame.progres_skill = atoi(optarg);
 				break;
 			case 'M':
 				score_multiply = atoi(optarg);
@@ -90,61 +95,12 @@ int main(int argc, char * argv[]) {
 		exit(EXIT_SUCCESS);
 	}
 
-	player_character.print();
-	print_actions_table();
-	int sel , ret = 0;
-	int total_cost = 0;
-	int total_income = 0;
-	ret = scanf( "%d" , &sel );
-	while(
-			 (sel >= 0)
-			&& (sel < (int)SIZEOF_TABLE_ACTION)
-			&& (ret != EOF)
-			&& (ret > 0)
-			) {
-		print_action(TABLE_ACTION[sel]);
-		player_character.print();
-		int const add =
-			  (player_character.level_stat)
-			+ (player_character.level_skill)
-			+ (TABLE_ACTION[sel].modifier_difficulty);
-		int const required_roll = d16_required_roll_for_success( add );
-		printf( "add:%d; required_roll:%d; "
-				, add
-				, required_roll );
-		if( required_roll >= DICESIDES ) {
-			printf( "Impossible(required_roll>=0x%x). Aborting action.\n"
-					, DICESIDES);
-		} else {
-			int const cost = TABLE_ACTION[sel].cost;
-			total_cost += cost;
-			player_character.resources -= cost;
-			printf( "roll:" );
-			const RollResult roll = RollResult( add , 1 );
-			print_rollresult( roll );
-			if(  (roll.is_success()) ) {
-				int const income = ((2 + roll.success_level) * cost);
-				player_character.resources += income;
-				total_income += income;
-			} else {
-				player_character.add_progres( 1 );
-				player_character.print();
-			}
-			if( player_character.resources < 0 ) {
-				goto jump_end;
-			}
-		}
 
-		ret = scanf( "%d" , &sel );
-	}
-
-
-	printf( "\nGame ended\ntotal_cost=%d ; total_income = %d\n" , total_cost , total_income );
-
-jump_end:
-	if(player_character.resources < 0) {
-		printf( "You lost, because you went into negative money and failed to recover!\n" );
-	}
+	minigame_crafting(
+			 minigame.level_stat
+			,minigame.level_skill
+			,minigame.progres_skill
+			);
 }
 
 

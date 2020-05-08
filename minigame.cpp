@@ -2,13 +2,16 @@
 
 
 
+
 const Action
 TABLE_ACTION[] = {
 	{  0  , 1 ,  "Trivial"   ,  } ,
 	{ -2  , 2 ,  "Easy"      ,  } ,
 	{ -6  , 4 ,  "Medium"    ,  } ,
 	{ -12 , 6 ,  "Difficult" ,  } ,
-	{ -20 , 8 ,  "Advanced"  ,  } ,
+	{ -16 , 8 ,  "Advanced"  ,  } ,
+	{ -20 ,12 ,  "Adept"  ,  } ,
+	{ -24 ,16 ,  "Expert"  ,  } ,
 };
 size_t const SIZEOF_TABLE_ACTION = sizeof(TABLE_ACTION)/sizeof(TABLE_ACTION[0]);
 
@@ -28,6 +31,10 @@ static_assert( SIZEOF_STRINGTABLE_WEAPON_TYPE == sizeof(STRINGTABLE_WEAPON_TYPE)
 const
 WeaponBase
 TABLE_WEAPON_BASE[] = {
+	{ .type=weapon_type_none, .range=1, .base_damage=1, .name = "None" } ,
+	{ .type=weapon_type_polearm , .to_hit = -4 , .range = 2, .base_damage = 2 , .name = "Training Spear" } ,
+	{ .type=weapon_type_sword   , .to_hit = -4 , .range = 1, .base_damage = 2 , .name = "Training Sword" } ,
+	{ .type=weapon_type_axe     , .to_hit = -4 , .range = 1, .base_damage = 2 , .name = "Training Axe" } ,
 	{ .type=weapon_type_polearm , .range = 3, .base_damage = 6 , .name = "Spear" } ,
 	{ .type=weapon_type_sword   , .range = 1, .base_damage = 3 , .name = "Shortsword" } ,
 	{ .type=weapon_type_axe , .required_strength = 2 , .to_hit = -2 , .range = 1, .base_damage = 5 , .name = "Lumber Axe" } ,
@@ -121,3 +128,73 @@ display_table_weapon_base(FILE * f)
 	}
 }
 
+
+void
+minigame_crafting(
+		 int const level_stat
+		,int const level_skill
+		,int const progres_skill
+		)
+{
+	struct Character player_character;
+	player_character.level_stat    = level_stat;
+	player_character.level_skill   = level_skill;
+	player_character.progres_skill = progres_skill;
+
+	printf( "welcome to d16 minigame!\n" );
+	player_character.print();
+	print_actions_table();
+	int sel , ret = 0;
+	int total_cost = 0;
+	int total_income = 0;
+	ret = scanf( "%d" , &sel );
+	while(
+			 (sel >= 0)
+			&& (sel < (int)SIZEOF_TABLE_ACTION)
+			&& (ret != EOF)
+			&& (ret > 0)
+			) {
+		print_action(TABLE_ACTION[sel]);
+		player_character.print();
+		int const add =
+			  (player_character.level_stat)
+			+ (player_character.level_skill)
+			+ (TABLE_ACTION[sel].modifier_difficulty);
+		int const required_roll = d16_required_roll_for_success( add );
+		printf( "add:%d; required_roll:%d; "
+				, add
+				, required_roll );
+		if( required_roll >= DICESIDES ) {
+			printf( "Impossible(required_roll>=0x%x). Aborting action.\n"
+					, DICESIDES);
+		} else {
+			int const cost = TABLE_ACTION[sel].cost;
+			total_cost += cost;
+			player_character.resources -= cost;
+			printf( "roll:" );
+			const RollResult roll = RollResult( add , 1 );
+			print_rollresult( roll );
+			if(  (roll.is_success()) ) {
+				int const income = ((2 + roll.success_level) * cost);
+				player_character.resources += income;
+				total_income += income;
+			} else {
+				player_character.add_progres( 1 );
+				player_character.print();
+			}
+			if( player_character.resources < 0 ) {
+				goto jump_end;
+			}
+		}
+
+		ret = scanf( "%d" , &sel );
+	}
+
+
+	printf( "\nGame ended\ntotal_cost=%d ; total_income = %d\n" , total_cost , total_income );
+
+jump_end:
+	if(player_character.resources < 0) {
+		printf( "You lost, because you went into negative money and failed to recover!\n" );
+	}
+}
