@@ -16,30 +16,8 @@ TABLE_ACTION[] = {
 size_t const SIZEOF_TABLE_ACTION = sizeof(TABLE_ACTION)/sizeof(TABLE_ACTION[0]);
 
 
-const char *
-STRINGTABLE_WEAPON_TYPE[] = {
-	[weapon_type_none] = "[no_weapon_type]" ,
-	[weapon_type_sword] = "sword",
-	[weapon_type_axe] = "axe",
-	[weapon_type_polearm] = "polearm",
-	[weapon_type_club] = "club",
-};
-static_assert( SIZEOF_STRINGTABLE_WEAPON_TYPE == sizeof(STRINGTABLE_WEAPON_TYPE)/sizeof(STRINGTABLE_WEAPON_TYPE[0]) );
 
 
-
-const
-WeaponBase
-TABLE_WEAPON_BASE[] = {
-	{ .type=weapon_type_none, .range=1, .base_damage=1, .name = "None" } ,
-	{ .type=weapon_type_polearm , .to_hit = -4 , .range = 2, .base_damage = 2 , .name = "Training Spear" } ,
-	{ .type=weapon_type_sword   , .to_hit = -4 , .range = 1, .base_damage = 2 , .name = "Training Sword" } ,
-	{ .type=weapon_type_axe     , .to_hit = -4 , .range = 1, .base_damage = 2 , .name = "Training Axe" } ,
-	{ .type=weapon_type_polearm , .range = 3, .base_damage = 6 , .name = "Spear" } ,
-	{ .type=weapon_type_sword   , .range = 1, .base_damage = 3 , .name = "Shortsword" } ,
-	{ .type=weapon_type_axe , .required_strength = 2 , .to_hit = -2 , .range = 1, .base_damage = 5 , .name = "Lumber Axe" } ,
-};
-size_t const SIZEOF_TABLE_WEAPON_BASE (sizeof(TABLE_WEAPON_BASE)/sizeof(TABLE_WEAPON_BASE[0])) ;
 
 
 
@@ -91,42 +69,6 @@ print_actions_table(void) {
 	}
 }
 
-
-void
-display_table_weapon_type(FILE * f)
-{
-	for(int i = 0; i < SIZEOF_STRINGTABLE_WEAPON_TYPE; ++i) {
-		fprintf(f , "%d %s\n" , i , STRINGTABLE_WEAPON_TYPE[i] );
-	}
-}
-
-
-void
-WeaponBase::fprint( FILE * f
-) const {
-	fprintf( f , "t %d rs %d rd %d rw %d th %d rng %d dmg %d"
-			, type
-			, required_strength
-			, required_dexterity
-			, required_wisdom
-			, to_hit
-			, range
-			, base_damage );
-	if( name ) {
-		fprintf( f , "%s", name );
-	}
-}
-
-
-void
-display_table_weapon_base(FILE * f)
-{
-	for(size_t i = 0; i < SIZEOF_TABLE_WEAPON_BASE ; ++i ) {
-		fprintf(f , "%lu" , i );
-		TABLE_WEAPON_BASE[i].fprint(f);
-		fprintf(f , "\n" );
-	}
-}
 
 
 void

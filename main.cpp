@@ -5,7 +5,7 @@
 
 #include "d16.h"
 #include "minigame.h"
-
+#include "minigame_combat.h"
 
 
 
