@@ -219,7 +219,9 @@ display_table_weapon_base(FILE * f)
 
 enum counter_type {
  // I keep wanting to add some harder abstraction for the counters.
- // as in: a separate definition of countertype(that would , to decouple
+ // as in: a separate definition of counter_type
+ // that would hold data on "is it halving per turn, or decrement. does it deal damage? and so on", to decouple things further
+ // I also want to put all the stats in an array, to also have stat_type_strength etc.
 	counter_type_poison ,
 	counter_type_bleed ,
 	counter_type_slow ,
