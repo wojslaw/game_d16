@@ -331,33 +331,26 @@ void CombatEntity::receive_damage(int damage) {
 
 int
 counter_perform_halving(int * counter) {
-	//fprintf( stderr , "(%d" , (*counter) );
 	if( (*counter) > 0 ) {
 		int value = (*counter)/2;
 		if( value < 1 ) {
 			value = 1;
 		}
-		//fprintf( stderr , "  %d" , value );
 		(*counter) -= value;
-		//fprintf( stderr , "  %d\n" , *counter);
 		return value;
 	}
 
 	if( *counter < 0 ) {
 		++(*counter);
 	}
-	//fprintf( stderr , "\n");
 	return 0; // I'm not sure about handling negative values. For now, I think it will be enough if they just get returned as 0, since "halving"-type counters are damage.
 }
 
 
 void counter_decrement(int * counter) {
-	//fprintf( stderr , "[%d  " , (*counter));
 	if((*counter) > 0) {
-		//fprintf( stderr , " ! " );
 		--(*counter);
 	}
-	//fprintf( stderr , "  %d]\n" , (*counter));
 }
 
 
