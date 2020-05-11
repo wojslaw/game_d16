@@ -254,19 +254,19 @@ struct CombatEntity {
 	bool is_dead() const { return ( stat.hp_current < 0); };
 
 	int get_hp_missing(void) const { return stat.hp_max - stat.hp_current;  }
-	int get_rollmod_strength(void) const { return stat.strength; };
-	int get_rollmod_dexterity(void) const { return stat.dexterity; };
+	int get_rollmod_strength(void) const { return (stat.strength); };
+	int get_rollmod_dexterity(void) const { return (stat.dexterity - get_counter_value(counter_type_weakness)); };
 	int get_rollmod_wisdom(void) const { return stat.wisdom; };
 	int get_rollmod_attack(void) const  { return get_rollmod_dexterity(); };
 	int get_rollmod_defense(void) const { return get_rollmod_dexterity(); };
 	int get_rollmod_damage(void) const { return get_rollmod_strength(); };
-	int get_counter_value(enum counter_type ct);
+	int get_counter_value(enum counter_type ct) const;
 	int * ref_counter(enum counter_type ct);
 
 	void receive_damage(int damage);
 	void receive_attack(const CombatEntity * attacker);
 
-	void perform_post_round_counters_effects(void);
+	void perform_post_counters_per_round_effects(void);
 
 	void equip(); //todo
 };
@@ -294,7 +294,6 @@ CombatEntity::fprint(FILE * f) {
 			,stat.dexterity
 			,stat.wisdom
 			);
-	fprint_all_counters(f);
 	fprint_nonzero_counters(f);
 }
 
@@ -332,23 +331,33 @@ void CombatEntity::receive_damage(int damage) {
 
 int
 counter_perform_halving(int * counter) {
-	if( *counter > 0 ) {
-		int const value = (*counter)/2;
+	//fprintf( stderr , "(%d" , (*counter) );
+	if( (*counter) > 0 ) {
+		int value = (*counter)/2;
+		if( value < 1 ) {
+			value = 1;
+		}
+		//fprintf( stderr , "  %d" , value );
 		(*counter) -= value;
+		//fprintf( stderr , "  %d\n" , *counter);
 		return value;
 	}
 
 	if( *counter < 0 ) {
 		++(*counter);
 	}
+	//fprintf( stderr , "\n");
 	return 0; // I'm not sure about handling negative values. For now, I think it will be enough if they just get returned as 0, since "halving"-type counters are damage.
 }
 
 
 void counter_decrement(int * counter) {
-	if(*counter > 0) {
+	//fprintf( stderr , "[%d  " , (*counter));
+	if((*counter) > 0) {
+		//fprintf( stderr , " ! " );
 		--(*counter);
 	}
+	//fprintf( stderr , "  %d]\n" , (*counter));
 }
 
 
@@ -359,17 +368,21 @@ int * CombatEntity::ref_counter(enum counter_type ct) {
 }
 
 
-int CombatEntity::get_counter_value(enum counter_type ct) {
-	return (*ref_counter(ct));
+int CombatEntity::get_counter_value(enum counter_type ct) const {
+	assert( ct >= 0);
+	assert( ct < COUNTER_TYPE_COUNT);
+	return counter_array[ct];
 }
 
 
 void
-CombatEntity::perform_post_round_counters_effects(void) {
-	counter_perform_halving(&counter_array[counter_type_poison]);
-	counter_perform_halving(&counter_array[counter_type_bleed]);
-	counter_decrement(&counter_array[counter_type_slow]);
-	counter_decrement(&counter_array[counter_type_weakness]);
+CombatEntity::perform_post_counters_per_round_effects(void) {
+	// damage-over-time
+	receive_damage( counter_perform_halving(ref_counter(counter_type_poison)) );
+	receive_damage( counter_perform_halving(ref_counter(counter_type_bleed)) );
+	// only reduce
+	counter_decrement(ref_counter(counter_type_slow));
+	counter_decrement(ref_counter(counter_type_weakness));
 }
 
 
@@ -378,13 +391,15 @@ perform_example_combat(FILE * f)
 {
 	struct CombatEntity you;
 	you.stat.dexterity = 3;
-	you.stat.strength = 6;
+	you.stat.strength = 0;
 	you.stat.hp_max = 16;
 	you.stat.hp_current = 16;
 	struct CombatEntity foe;
 	foe.stat.hp_max = 12;
 	foe.stat.hp_current = 12;
 	foe.stat.strength = 4;
+	(*foe.ref_counter(counter_type_bleed)) = 2;
+	(*foe.ref_counter(counter_type_weakness)) = 4;
 
 	fprintf( f , "you: " );
 	you.fprint(f);
@@ -395,23 +410,29 @@ perform_example_combat(FILE * f)
 	int const ROUND_COUNT = 4;
 
 	int round = 0;
-	for( int round = 0; round < ROUND_COUNT ; ++round ) {
+	for( ; round < ROUND_COUNT ; ++round ) {
 		fprintf(f , "  round %d\n" , round);
-			fprintf( f, "you hit:" );
-			const RollResult rr_atk_you = roll_attack( you , foe );
-			rr_atk_you.fprint(f);
-			fprintf( f , "\n" );
-			fprintf( f, "foe hits:" );
-			const RollResult rr_atk_foe = roll_attack( foe , you );
-			rr_atk_foe.fprint(f);
-			fprintf( f , "\n" );
-			foe.receive_damage( rr_atk_you.get_success_level() );
-			you.receive_damage( rr_atk_foe.get_success_level() );
-			fprintf( f , "you's hp:%d/%d \n" , you.stat.hp_current , you.stat.hp_max );
-			fprintf( f , "foe's hp:%d/%d \n" , foe.stat.hp_current , foe.stat.hp_max );
-			if( you.is_dead() || foe.is_dead() ) {
-				break;
-			}
+		fprintf( f, "you hit:" );
+		const RollResult rr_atk_you = roll_attack( you , foe );
+		rr_atk_you.fprint(f);
+		fprintf( f , "\n" );
+		fprintf( f, "foe hits:" );
+		const RollResult rr_atk_foe = roll_attack( foe , you );
+		rr_atk_foe.fprint(f);
+		fprintf( f , "\n" );
+		foe.receive_damage( rr_atk_you.get_success_level() );
+		you.receive_damage( rr_atk_foe.get_success_level() );
+		if( you.is_dead() || foe.is_dead() ) {
+			break;
+		}
+		you.perform_post_counters_per_round_effects();
+		foe.perform_post_counters_per_round_effects();
+		fprintf( f , "you: " );
+		you.fprint(f);
+		fprintf( f , "\n" );
+		fprintf( f , "foe: " );
+		foe.fprint(f);
+		fprintf( f , "\n" );
 	}
 	fprintf( f, "  Combat ended after %d rounds. Results:\n" , round );
 	fprintf( f , "you: " );
