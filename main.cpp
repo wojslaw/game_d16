@@ -4,7 +4,7 @@
 #include <time.h>
 
 #include "d16.h"
-#include "minigame.h"
+#include "minigame_crafting.h"
 #include "minigame_combat.h"
 
 
@@ -52,6 +52,11 @@ int main(int argc, char * argv[]) {
 		int level_skill = 0;
 		int progres_skill = 0;
 	} minigame;
+	enum minigame_type {
+		minigame_type_crafting_economy ,
+		minigame_type_combat ,
+	};
+	enum minigame_type minigame_type = minigame_type_combat;
 
 	int opt;
 	while ((opt = getopt(argc, argv, "DBTt:k:p:M:A:")) != -1) {
@@ -96,11 +101,20 @@ int main(int argc, char * argv[]) {
 	}
 
 
-	minigame_crafting(
-			 minigame.level_stat
-			,minigame.level_skill
-			,minigame.progres_skill
-			);
+	switch(minigame_type) {
+		case minigame_type_crafting_economy:
+			minigame_crafting(
+					minigame.level_stat
+					,minigame.level_skill
+					,minigame.progres_skill
+					);
+			break;
+		case minigame_type_combat:
+			perform_example_combat(stdout);
+			break;
+		default:
+			fprintf(stderr , "unrecognized minigame type:%d\n" , minigame_type);
+	}
 }
 
 

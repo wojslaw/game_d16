@@ -59,7 +59,7 @@ void
 print_rollresult(
 		const RollResult &rr)
 {
-	printf( "%d (s%2d;d 0x%x;a %d;m %d)\n"
+	printf( "%d (s%2d ; d 0x%x ; a %d ; m %d)"
 			,rr.success_level
 			,rr.success_score
 			,rr.diceroll
@@ -74,4 +74,17 @@ print_rollresult(
 int d16_required_roll_for_success(
 		int const modifier ) {
 	return (-modifier);
+}
+
+
+void
+RollResult::fprint(FILE * f) {
+// print_rollresult(*this); // hmm, weird quirk of C++ : you have to dereference here, because `this` is a pointer
+	fprintf( f , "%d (s%2d ; d 0x%x ; a %d ; m %d)"
+			,success_level
+			,success_score
+			,diceroll
+			,add
+			,multiply
+		  );
 }

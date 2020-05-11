@@ -10,7 +10,7 @@ enum weapon_type {
 };
 
 const char *
-STRINGTABLE_WEAPON_TYPE[] = {
+STRINGTABLE_WEAPON_TYPE[SIZEOF_STRINGTABLE_WEAPON_TYPE] = {
 	[weapon_type_none] = "[no_weapon_type]" ,
 	[weapon_type_sword] = "sword",
 	[weapon_type_axe] = "axe",
@@ -18,6 +18,78 @@ STRINGTABLE_WEAPON_TYPE[] = {
 	[weapon_type_club] = "club",
 };
 static_assert( SIZEOF_STRINGTABLE_WEAPON_TYPE == sizeof(STRINGTABLE_WEAPON_TYPE)/sizeof(STRINGTABLE_WEAPON_TYPE[0]) );
+
+
+enum monster_type {
+	monster_type_none ,
+	monster_type_devil ,
+	monster_type_blob ,
+	monster_type_porkish ,
+	monster_type_mootant ,
+	monster_type_undead ,
+	monster_type_vermin ,
+	SIZEOF_TABLE_MONSTER_TYPE ,
+};
+
+struct MonsterType {
+	int base_hp_max = 0;
+	int base_damage = 1;
+	int base_attack = 1;
+	int base_defense = 1;
+	const char * description;
+};
+
+
+// maybe it isn't a good idea to put in those "base stats" for monster types?
+// I'm thinking about whether I want to balance it around different monster_type having differing levels of difficulty?
+// Or maybe! The "base stats" will be more of a "focus" of each monster_type
+// one monster_type would be low-health, high def? other would be low hp/def, but high attack?
+// and other would be more "human like" in that they are well-rounded
+// and only specific monster_base in a given monster_type would be even further specialized.
+// but I still have a feeling this is a stupid idea, and that it will be overall more sensible to define stats for each monster_type, without shadowing that by 
+// because I don't exactly want to feel stuck in having to think about both the monster_type and monster_base stats
+// but still, it sounds like a mildly interesting idea, to think of it kinda like species
+// There could also be something kinda like Diablo, in that there are so-called difficulty levels, which just mean the monsters get higher stats there.
+const MonsterType
+TABLE_MONSTER_TYPE[SIZEOF_TABLE_MONSTER_TYPE] = {
+	[monster_type_none] = {
+		.description = "None"
+	},
+	[monster_type_devil] = {
+		.description = "Devil"
+	},
+	[monster_type_blob] = {
+		.description = "Blob"
+	},
+	[monster_type_porkish] = {
+		.base_hp_max  = 2 ,
+		.base_damage  = 2 ,
+		.base_attack  = 0 ,
+		.base_defense = 4 ,
+		.description = "Porkish"
+	},
+	[monster_type_mootant] = {
+		.description = "Mootant"
+	},
+	[monster_type_undead] = {
+		.base_hp_max  = 0 ,
+		.base_damage  = 2 ,
+		.base_attack  = 2 ,
+		.base_defense = 4 ,
+		.description  = "Undead"
+	},
+	[monster_type_vermin] = {
+		.base_hp_max  = 0 ,
+		.base_damage  = 2 ,
+		.base_attack  = 0 ,
+		.base_defense = 4 ,
+		.description  = "Vermin" ,
+	},
+};
+static_assert( SIZEOF_TABLE_MONSTER_TYPE == sizeof(TABLE_MONSTER_TYPE)/sizeof(TABLE_MONSTER_TYPE[0]) );
+
+
+
 
 
 struct TrainingType {
@@ -146,7 +218,7 @@ display_table_weapon_base(FILE * f)
 
 
 
-struct Warrior {
+struct CombatEntity {
 	struct {
 		int hp_max = 1;
 		int hp_current = 1;
@@ -155,5 +227,87 @@ struct Warrior {
 		int wisdom = 1;
 	} stat;
 	int hp_missing(void) const { return stat.hp_max - stat.hp_current;  }
-	void equip();
+	int get_rollmod_strength(void) const { return stat.strength; };
+	int get_rollmod_dexterity(void) const { return stat.dexterity; };
+	int get_rollmod_wisdom(void) const { return stat.wisdom; };
+	int get_rollmod_attack(void) const  { return get_rollmod_dexterity(); };
+	int get_rollmod_defense(void) const { return get_rollmod_dexterity(); };
+	int get_rollmod_damage(void) const { return get_rollmod_strength(); };
+	void equip(); //todo
+	void fprint(FILE * f);
+	void receive_damage(int damage);
+	void receive_attack(const CombatEntity * attacker);
 };
+
+
+RollResult roll_attack(
+		 const CombatEntity & attacker
+		,const CombatEntity & target
+		) {
+	int const rollmod_attack = attacker.get_rollmod_attack();
+	int const rollmod_defense = target.get_rollmod_defense();
+	int const rollmod_damage = attacker.get_rollmod_damage();
+	return RollResult(
+			(rollmod_attack - rollmod_defense)
+			,rollmod_damage ) ;
+}
+
+
+void
+CombatEntity::fprint(FILE * f) {
+	fprintf( f , "hp %d/%d , STR %d , DEX %d , WIS %d"
+			,stat.hp_current
+			,stat.hp_max
+			,stat.strength
+			,stat.dexterity
+			,stat.wisdom
+			);
+}
+
+
+void CombatEntity::receive_damage(int damage) {
+	if( damage < 0 ) {
+		damage = 0;
+	}
+	stat.hp_current -= damage;
+}
+
+
+
+void
+perform_example_combat(FILE * f)
+{
+	struct CombatEntity you;
+	you.stat.dexterity = 3;
+	you.stat.strength = 6;
+	you.stat.hp_max = 8;
+	you.stat.hp_current = 8;
+	struct CombatEntity foe;
+	foe.stat.hp_max = 4;
+	foe.stat.hp_current = 4;
+	foe.stat.strength = 4;
+
+	fprintf( f , "you: " );
+	you.fprint(f);
+	fprintf( f , "\n" );
+	fprintf( f , "foe: " );
+	foe.fprint(f);
+	fprintf( f , "\n" );
+	int const ROUND_COUNT = 4;
+
+	for( int i = 0; i < ROUND_COUNT ; ++i ) {
+		fprintf(f , "round %d\n" , i);
+			fprintf( f, "you hit:" );
+			RollResult atk_you = roll_attack( you , foe );
+			atk_you.fprint(f);
+			fprintf( f , "\n" );
+			fprintf( f, "foe hits:" );
+			RollResult atk_foe = roll_attack( foe , you );
+			atk_foe.fprint(f);
+			fprintf( f , "\n" );
+			
+			fprintf( f , "\n" );
+	}
+}
+
+
