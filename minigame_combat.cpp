@@ -217,6 +217,24 @@ display_table_weapon_base(FILE * f)
 }
 
 
+enum counter_type {
+ // I keep wanting to add some harder abstraction for the counters.
+ // as in: a separate definition of countertype(that would , to decouple
+	counter_type_poison ,
+	counter_type_bleed ,
+	counter_type_slow ,
+	counter_type_weakness ,
+	COUNTER_TYPE_COUNT ,
+};
+
+const char *
+STRINGTABLE_COUNTERTYPE_SYMBOL[] {
+	[counter_type_poison] = "P" ,
+	[counter_type_bleed] = "B" ,
+	[counter_type_slow] = "S" ,
+	[counter_type_weakness] = "W"
+};
+
 
 struct CombatEntity {
 	struct {
@@ -226,20 +244,31 @@ struct CombatEntity {
 		int dexterity = 1;
 		int wisdom = 1;
 	} stat;
+	int counter_array[COUNTER_TYPE_COUNT] = {0};
 
 	//methods
-	int hp_missing(void) const { return stat.hp_max - stat.hp_current;  }
+	void fprint(FILE * f);
+	void fprint_all_counters(FILE * f);
+	void fprint_nonzero_counters(FILE * f);
+
+	bool is_dead() const { return ( stat.hp_current < 0); };
+
+	int get_hp_missing(void) const { return stat.hp_max - stat.hp_current;  }
 	int get_rollmod_strength(void) const { return stat.strength; };
 	int get_rollmod_dexterity(void) const { return stat.dexterity; };
 	int get_rollmod_wisdom(void) const { return stat.wisdom; };
 	int get_rollmod_attack(void) const  { return get_rollmod_dexterity(); };
 	int get_rollmod_defense(void) const { return get_rollmod_dexterity(); };
 	int get_rollmod_damage(void) const { return get_rollmod_strength(); };
-	void equip(); //todo
-	void fprint(FILE * f);
+	int get_counter_value(enum counter_type ct);
+	int * ref_counter(enum counter_type ct);
+
 	void receive_damage(int damage);
 	void receive_attack(const CombatEntity * attacker);
-	int is_dead() const { return ( stat.hp_current < 0); };
+
+	void perform_post_round_counters_effects(void);
+
+	void equip(); //todo
 };
 
 
@@ -258,13 +287,38 @@ RollResult roll_attack(
 
 void
 CombatEntity::fprint(FILE * f) {
-	fprintf( f , "hp %d/%d , STR %d , DEX %d , WIS %d"
+	fprintf( f , "hp %d/%d , STR %d , DEX %d , WIS %d ;"
 			,stat.hp_current
 			,stat.hp_max
 			,stat.strength
 			,stat.dexterity
 			,stat.wisdom
 			);
+	fprint_all_counters(f);
+	fprint_nonzero_counters(f);
+}
+
+
+void
+CombatEntity::fprint_nonzero_counters(FILE * f)  {
+	for( int i = 0; i < COUNTER_TYPE_COUNT; ++i ) {
+		int const value = get_counter_value( (enum counter_type) i );
+		if( value != 0 ) {
+			fprintf( f , " c%s%d "
+					, STRINGTABLE_COUNTERTYPE_SYMBOL[i]
+					, value  );
+		}
+	}
+}
+
+
+void
+CombatEntity::fprint_all_counters(FILE * f)  {
+	for( int i = 0; i < COUNTER_TYPE_COUNT; ++i ) {
+		fprintf( f , " c%s%d"
+				, STRINGTABLE_COUNTERTYPE_SYMBOL[i]
+				, get_counter_value( (enum counter_type) i ) );
+	}
 }
 
 
@@ -276,6 +330,48 @@ void CombatEntity::receive_damage(int damage) {
 }
 
 
+int
+counter_perform_halving(int * counter) {
+	if( *counter > 0 ) {
+		int const value = (*counter)/2;
+		(*counter) -= value;
+		return value;
+	}
+
+	if( *counter < 0 ) {
+		++(*counter);
+	}
+	return 0; // I'm not sure about handling negative values. For now, I think it will be enough if they just get returned as 0, since "halving"-type counters are damage.
+}
+
+
+void counter_decrement(int * counter) {
+	if(*counter > 0) {
+		--(*counter);
+	}
+}
+
+
+int * CombatEntity::ref_counter(enum counter_type ct) {
+	assert( ct >= 0);
+	assert( ct < COUNTER_TYPE_COUNT);
+	return &(counter_array[ct]);
+}
+
+
+int CombatEntity::get_counter_value(enum counter_type ct) {
+	return (*ref_counter(ct));
+}
+
+
+void
+CombatEntity::perform_post_round_counters_effects(void) {
+	counter_perform_halving(&counter_array[counter_type_poison]);
+	counter_perform_halving(&counter_array[counter_type_bleed]);
+	counter_decrement(&counter_array[counter_type_slow]);
+	counter_decrement(&counter_array[counter_type_weakness]);
+}
+
 
 void
 perform_example_combat(FILE * f)
@@ -283,11 +379,11 @@ perform_example_combat(FILE * f)
 	struct CombatEntity you;
 	you.stat.dexterity = 3;
 	you.stat.strength = 6;
-	you.stat.hp_max = 8;
-	you.stat.hp_current = 8;
+	you.stat.hp_max = 16;
+	you.stat.hp_current = 16;
 	struct CombatEntity foe;
-	foe.stat.hp_max = 4;
-	foe.stat.hp_current = 4;
+	foe.stat.hp_max = 12;
+	foe.stat.hp_current = 12;
 	foe.stat.strength = 4;
 
 	fprintf( f , "you: " );
