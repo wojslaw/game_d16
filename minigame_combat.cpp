@@ -224,17 +224,56 @@ enum counter_type {
  // I also want to put all the stats in an array, to also have stat_type_strength etc.
 	counter_type_poison ,
 	counter_type_bleed ,
-	counter_type_slow ,
+	counter_type_slowness ,
 	counter_type_weakness ,
 	COUNTER_TYPE_COUNT ,
 };
 
 const char *
-STRINGTABLE_COUNTERTYPE_SYMBOL[] {
-	[counter_type_poison] = "P" ,
-	[counter_type_bleed] = "B" ,
-	[counter_type_slow] = "S" ,
-	[counter_type_weakness] = "W"
+STRINGTABLE_COUNTERTYPE_SYMBOL[COUNTER_TYPE_COUNT] {
+	[counter_type_poison] = "Pois" ,
+	[counter_type_bleed] = "Bled" ,
+	[counter_type_slowness] = "Slow" ,
+	[counter_type_weakness] = "Weak"
+};
+
+
+const char *
+STRINGTABLE_COUNTERTYPE_NAME[COUNTER_TYPE_COUNT] {
+	[counter_type_poison] = "Poison" ,
+	[counter_type_bleed] = "Bleed" ,
+	[counter_type_slowness] = "Slowness" ,
+	[counter_type_weakness] = "Weakness"
+};
+
+
+enum stat_type {
+	stat_type_hp_max ,
+	stat_type_hp_current ,
+	stat_type_strength ,
+	stat_type_dexterity ,
+	stat_type_wisdom ,
+	STAT_TYPE_COUNT ,
+};
+
+
+const char *
+STRINGTABLE_STATTYPE_SYMBOL[STAT_TYPE_COUNT] {
+	[stat_type_hp_max] = "HPmax" ,
+	[stat_type_hp_current] = "HPcur" ,
+	[stat_type_strength] = "STR" ,
+	[stat_type_dexterity] =  "DEX" ,
+	[stat_type_wisdom] = "WIS" ,
+};
+
+
+const char *
+STRINGTABLE_STATTYPE_NAME[STAT_TYPE_COUNT] {
+	[stat_type_hp_max] = "Hitpoints Max" ,
+	[stat_type_hp_current] = "Hitpoints Current" ,
+	[stat_type_strength] = "Strength" ,
+	[stat_type_dexterity] =  "Dexterity" ,
+	[stat_type_wisdom] = "Wisdom" ,
 };
 
 
@@ -302,13 +341,21 @@ CombatEntity::fprint(FILE * f) {
 
 void
 CombatEntity::fprint_nonzero_counters(FILE * f)  {
+	bool printed_some_counter = false;
 	for( int i = 0; i < COUNTER_TYPE_COUNT; ++i ) {
 		int const value = get_counter_value( (enum counter_type) i );
 		if( value != 0 ) {
-			fprintf( f , " c%s%d "
+			if( !printed_some_counter ) {
+				fprintf( f , "(counters:");
+				printed_some_counter = true;
+			}
+			fprintf( f , " %s%d"
 					, STRINGTABLE_COUNTERTYPE_SYMBOL[i]
 					, value  );
 		}
+	}
+	if( printed_some_counter ) {
+		fprintf( f , ") ;" );
 	}
 }
 
@@ -376,7 +423,7 @@ CombatEntity::perform_post_counters_per_round_effects(void) {
 	receive_damage( counter_perform_halving(ref_counter(counter_type_poison)) );
 	receive_damage( counter_perform_halving(ref_counter(counter_type_bleed)) );
 	// only reduce
-	counter_decrement(ref_counter(counter_type_slow));
+	counter_decrement(ref_counter(counter_type_slowness));
 	counter_decrement(ref_counter(counter_type_weakness));
 }
 
