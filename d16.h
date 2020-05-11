@@ -33,7 +33,8 @@ struct RollResult {
 				roll_d16()
 				,_success_add
 				,_success_multiply ) {}
-	void fprint(FILE * f);
+	void fprint(FILE * f) const;
+	int get_success_level(void) const ;
 };
 
 

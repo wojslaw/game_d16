@@ -78,7 +78,7 @@ int d16_required_roll_for_success(
 
 
 void
-RollResult::fprint(FILE * f) {
+RollResult::fprint(FILE * f) const {
 // print_rollresult(*this); // hmm, weird quirk of C++ : you have to dereference here, because `this` is a pointer
 	fprintf( f , "%d (s%2d ; d 0x%x ; a %d ; m %d)"
 			,success_level
@@ -88,3 +88,9 @@ RollResult::fprint(FILE * f) {
 			,multiply
 		  );
 }
+
+
+int
+RollResult::get_success_level(void) const {
+	return success_level;
+};

@@ -226,6 +226,8 @@ struct CombatEntity {
 		int dexterity = 1;
 		int wisdom = 1;
 	} stat;
+
+	//methods
 	int hp_missing(void) const { return stat.hp_max - stat.hp_current;  }
 	int get_rollmod_strength(void) const { return stat.strength; };
 	int get_rollmod_dexterity(void) const { return stat.dexterity; };
@@ -237,6 +239,7 @@ struct CombatEntity {
 	void fprint(FILE * f);
 	void receive_damage(int damage);
 	void receive_attack(const CombatEntity * attacker);
+	int is_dead() const { return ( stat.hp_current < 0); };
 };
 
 
@@ -295,19 +298,32 @@ perform_example_combat(FILE * f)
 	fprintf( f , "\n" );
 	int const ROUND_COUNT = 4;
 
-	for( int i = 0; i < ROUND_COUNT ; ++i ) {
-		fprintf(f , "round %d\n" , i);
+	int round = 0;
+	for( int round = 0; round < ROUND_COUNT ; ++round ) {
+		fprintf(f , "  round %d\n" , round);
 			fprintf( f, "you hit:" );
-			RollResult atk_you = roll_attack( you , foe );
-			atk_you.fprint(f);
+			const RollResult rr_atk_you = roll_attack( you , foe );
+			rr_atk_you.fprint(f);
 			fprintf( f , "\n" );
 			fprintf( f, "foe hits:" );
-			RollResult atk_foe = roll_attack( foe , you );
-			atk_foe.fprint(f);
+			const RollResult rr_atk_foe = roll_attack( foe , you );
+			rr_atk_foe.fprint(f);
 			fprintf( f , "\n" );
-			
-			fprintf( f , "\n" );
+			foe.receive_damage( rr_atk_you.get_success_level() );
+			you.receive_damage( rr_atk_foe.get_success_level() );
+			fprintf( f , "you's hp:%d/%d \n" , you.stat.hp_current , you.stat.hp_max );
+			fprintf( f , "foe's hp:%d/%d \n" , foe.stat.hp_current , foe.stat.hp_max );
+			if( you.is_dead() || foe.is_dead() ) {
+				break;
+			}
 	}
+	fprintf( f, "  Combat ended after %d rounds. Results:\n" , round );
+	fprintf( f , "you: " );
+	you.fprint(f);
+	fprintf( f , "\n" );
+	fprintf( f , "foe: " );
+	foe.fprint(f);
+	fprintf( f , "\n" );
 }
 
 
