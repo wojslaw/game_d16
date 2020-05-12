@@ -1,11 +1,62 @@
 #include "minigame_combat.h"
 
+
+
+void
+fprint_vector_of_strings(
+		 FILE * f
+		,std::vector< const char * > &vector_strings
+		)
+{
+	fprintf( f ,  "\n" );
+	int i = 0;
+	for( auto s : vector_strings ) {
+		fprintf( f , "%d %s\n"
+				, i
+				, s );
+		++i;
+	}
+	if( (size_t)i != vector_strings.size() ) {
+		fprintf( stderr , "BUG? in fprint_vector_of_strings(): (size_t)i != vector_strings.size()\n" );
+	}
+	if( i != (int)vector_strings.size() ) {
+		fprintf( stderr , "BUG? in fprint_vector_of_strings(): i != (int)vector_strings.size()\n" );
+	}
+}
+
+
+int
+select_fprint_vector_of_strings(
+		 FILE * f
+		,std::vector< const char * > vector_strings
+		)
+{
+	fprint_vector_of_strings(
+			 f
+			,vector_strings
+			);
+	fprintf( f , "input selection:\n" ); // TODO: better system for handling selections
+	int selection = -1;
+	scanf( "%i" , &selection );
+	return selection;
+}
+
+
+
+
+
+
+
+
+
+
 enum weapon_type {
 	weapon_type_none ,
 	weapon_type_sword ,
 	weapon_type_axe ,
 	weapon_type_polearm ,
 	weapon_type_club ,
+	weapon_type_ranged_thrower ,
 	SIZEOF_STRINGTABLE_WEAPON_TYPE ,
 };
 
@@ -16,6 +67,7 @@ STRINGTABLE_WEAPON_TYPE[SIZEOF_STRINGTABLE_WEAPON_TYPE] = {
 	[weapon_type_axe] = "axe",
 	[weapon_type_polearm] = "polearm",
 	[weapon_type_club] = "club",
+	[weapon_type_ranged_thrower] = "ranged_thrower" ,
 };
 static_assert( SIZEOF_STRINGTABLE_WEAPON_TYPE == sizeof(STRINGTABLE_WEAPON_TYPE)/sizeof(STRINGTABLE_WEAPON_TYPE[0]) );
 
@@ -141,6 +193,9 @@ TABLE_WEAPON_BASE[] = {
 	{ .type=weapon_type_polearm , .range = 3, .base_damage = 6 , .name = "Spear" } ,
 	{ .type=weapon_type_sword   , .range = 1, .base_damage = 3 , .name = "Shortsword" } ,
 	{ .type=weapon_type_axe , .required_strength = 2 , .to_hit = -2 , .range = 1, .base_damage = 5 , .name = "Lumber Axe" } ,
+	{ .type=weapon_type_ranged_thrower , .required_strength = 0 , .to_hit = 0 , .range = 6, .base_damage = 6 , .name = "Crossbow" } ,
+	{ .type=weapon_type_ranged_thrower , .required_strength = 1 , .to_hit = -2 , .range = 5, .base_damage = 6 , .name = "Short Bow" } ,
+	{ .type=weapon_type_ranged_thrower , .required_strength = 5 , .to_hit = -2 , .range = 8, .base_damage = 12 , .name = "Long Bow" } ,
 };
 size_t const SIZEOF_TABLE_WEAPON_BASE (sizeof(TABLE_WEAPON_BASE)/sizeof(TABLE_WEAPON_BASE[0])) ;
 
@@ -351,18 +406,51 @@ struct Ability {
 	int const rollmod_multiply;
 };
 
+typedef std::vector<const Ability *> VectorAbilityPointers;
 
-struct Ability
-TABLE_ABILITY[] = {
+const std::vector<Ability> VECTOR_ABILITIES = {
+	{
+		.name = "Attack" ,
+		.type = ability_type_attack ,
+		.on_success_counter_type = counter_type_none ,
+		.rollmod_add = 0 ,
+		.rollmod_multiply = 1 ,
+	} ,
 	{
 		.name = "Open Wounds" ,
 		.type = ability_type_attack ,
 		.on_success_counter_type = counter_type_bleed ,
-		.rollmod_add = -2 ,
-		.rollmod_multiply = 1 ,
+		.rollmod_add = -4 ,
+		.rollmod_multiply = 0 ,
+	} ,
+	{
+		.name = "Weaken" ,
+		.type = ability_type_instant ,
+		.on_success_counter_type = counter_type_weakness ,
+		.rollmod_add = -4 ,
+		.rollmod_multiply = 0 ,
 	}
 };
 
+
+const VectorAbilityPointers
+VECTOR_ABILITY_POINTERS_DEFAULT = {
+	&(VECTOR_ABILITIES[0]) ,
+	&(VECTOR_ABILITIES[1]) ,
+	&(VECTOR_ABILITIES[2]) ,
+};
+
+
+std::vector< const char * >
+vector_ability_pointer_get_vector_of_strings(
+		const VectorAbilityPointers & vec)
+{
+	std::vector< const char * > vector_strings;
+	for( auto a : vec ) {
+		vector_strings.push_back( a->name );
+	}
+	return vector_strings;
+}
 
 
 
@@ -383,6 +471,12 @@ struct CombatEntity {
 		[stat_type_dexterity] = 1 ,
 		[stat_type_wisdom] = 1 ,
 	};
+
+	VectorAbilityPointers vector_available_abilities = VECTOR_ABILITY_POINTERS_DEFAULT;
+	std::vector< const char * >
+		vector_available_abilities_strings
+		= vector_ability_pointer_get_vector_of_strings(
+				vector_available_abilities );
 
 	//methods
 	void fprint(FILE * f);
@@ -615,6 +709,7 @@ perform_example_combat(FILE * f)
 	int round = 0;
 	for( ; round < ROUND_COUNT ; ++round ) {
 		fprintf(f , "  round %d\n" , round);
+		select_fprint_vector_of_strings( stdout , you.vector_available_abilities_strings );
 		fprintf( f, "you hit:" );
 		const RollResult rr_atk_you = roll_attack( you , foe );
 		rr_atk_you.fprint(f);

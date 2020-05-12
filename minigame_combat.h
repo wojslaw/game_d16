@@ -1,6 +1,9 @@
 #pragma once
+#include <assert.h>
+#include <vector>
+#include <string>
+
 #include "d16.h"
-#include "assert.h"
 
 void
 perform_example_combat(FILE * f);
