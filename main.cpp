@@ -4,8 +4,8 @@
 #include <time.h>
 
 #include "d16.h"
-#include "minigame_crafting.h"
-#include "minigame_combat.h"
+#include "minigame/crafting/crafting.h"
+#include "minigame/combat/combat.h"
 
 
 

@@ -2,8 +2,9 @@
 #include <assert.h>
 #include <vector>
 #include <string>
+#include <array>
 
-#include "d16.h"
+#include "../../d16.h"
 
 void
 perform_example_combat(FILE * f);

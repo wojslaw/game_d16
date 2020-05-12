@@ -1,7 +1,7 @@
 APPNAME=game_d16
-SOURCES=main.cpp d16.cpp  minigame_crafting.cpp   minigame_combat.cpp
-HEADERS=d16.h  minigame_crafting.h  minigame_combat.h
-$(APPNAME): main.cpp d16.cpp d16.h minigame_crafting.cpp minigame_crafting.h  minigame_combat.cpp minigame_combat.h
+SOURCES=main.cpp d16.cpp  minigame/crafting/crafting.cpp   minigame/combat/combat.cpp
+HEADERS=d16.h  minigame/crafting/crafting.h  minigame/combat/combat.h
+$(APPNAME): $(SOURCES) $(HEADERS)
 	g++ -o $(APPNAME) -Wall -Wextra $(SOURCES)
 
 run: $(APPNAME)

@@ -1,4 +1,4 @@
-#include "minigame_combat.h"
+#include "combat.h"
 
 
 
@@ -60,16 +60,16 @@ enum weapon_type {
 	SIZEOF_STRINGTABLE_WEAPON_TYPE ,
 };
 
-const char *
-STRINGTABLE_WEAPON_TYPE[SIZEOF_STRINGTABLE_WEAPON_TYPE] = {
+
+std::array<const char * , SIZEOF_STRINGTABLE_WEAPON_TYPE>
+STRINGTABLE_WEAPON_TYPE = {{
 	[weapon_type_none] = "[no_weapon_type]" ,
 	[weapon_type_sword] = "sword",
 	[weapon_type_axe] = "axe",
 	[weapon_type_polearm] = "polearm",
 	[weapon_type_club] = "club",
 	[weapon_type_ranged_thrower] = "ranged_thrower" ,
-};
-static_assert( SIZEOF_STRINGTABLE_WEAPON_TYPE == sizeof(STRINGTABLE_WEAPON_TYPE)/sizeof(STRINGTABLE_WEAPON_TYPE[0]) );
+}};
 
 
 enum monster_type {
@@ -102,8 +102,9 @@ struct MonsterType {
 // because I don't exactly want to feel stuck in having to think about both the monster_type and monster_base stats
 // but still, it sounds like a mildly interesting idea, to think of it kinda like species
 // There could also be something kinda like Diablo, in that there are so-called difficulty levels, which just mean the monsters get higher stats there.
-const MonsterType
-TABLE_MONSTER_TYPE[SIZEOF_TABLE_MONSTER_TYPE] = {
+
+std::array<const MonsterType , SIZEOF_TABLE_MONSTER_TYPE>
+TABLE_MONSTER_TYPE = {{
 	[monster_type_none] = {
 		.description = "None"
 	},
@@ -137,8 +138,7 @@ TABLE_MONSTER_TYPE[SIZEOF_TABLE_MONSTER_TYPE] = {
 		.base_defense = 4 ,
 		.description  = "Vermin" ,
 	},
-};
-static_assert( SIZEOF_TABLE_MONSTER_TYPE == sizeof(TABLE_MONSTER_TYPE)/sizeof(TABLE_MONSTER_TYPE[0]) );
+}};
 
 
 
@@ -183,8 +183,9 @@ struct WeaponBase {
 		weapon_base_get_pointer_from_id(
 				size_t const id ) ;
 };
-const
-WeaponBase
+
+
+const WeaponBase
 TABLE_WEAPON_BASE[] = {
 	{ .type=weapon_type_none, .range=1, .base_damage=1, .name = "None" } ,
 	{ .type=weapon_type_polearm , .to_hit = -3 , .range = 2, .base_damage = 2 , .name = "Training Spear" } ,
@@ -287,37 +288,39 @@ enum counter_type {
 };
 
 
-const char *
-STRINGTABLE_COUNTERTYPE_SYMBOL[COUNTER_TYPE_COUNT] {
+
+
+std::array<const char * , COUNTER_TYPE_COUNT>
+STRINGTABLE_COUNTERTYPE_SYMBOL = {{
 	[counter_type_none] = "[[counter_type_none]]" ,
 	[counter_type_damage] = "RD",
 	[counter_type_poison] = "cP" ,
 	[counter_type_bleed] = "cB" ,
 	[counter_type_slowness] = "cS" ,
 	[counter_type_weakness] = "cW" ,
-};
+}};
 
 
-const char *
-STRINGTABLE_COUNTERTYPE_NAME[COUNTER_TYPE_COUNT] {
+std::array<const char * , COUNTER_TYPE_COUNT>
+STRINGTABLE_COUNTERTYPE_NAME {{
 	[counter_type_none] = "[[counter_type_none]]" ,
 	[counter_type_damage] = "ReceivedDamage",
 	[counter_type_poison] = "Poison" ,
 	[counter_type_bleed] = "Bleed" ,
 	[counter_type_slowness] = "Slowness" ,
 	[counter_type_weakness] = "Weakness"
-};
+}};
 
 
-const char *
-STRINGTABLE_COUNTERTYPE_NAME_NEGATIVE[COUNTER_TYPE_COUNT] {
+std::array<const char * , COUNTER_TYPE_COUNT>
+STRINGTABLE_COUNTERTYPE_NAME_NEGATIVE = {{
 	[counter_type_none] = "[[counter_type_none]]" ,
 	[counter_type_damage] = "Overheal",
 	[counter_type_poison] = "Antibodies(resist poison)" ,
 	[counter_type_bleed] = "Clotting(resist bleed)" ,
 	[counter_type_slowness] = "Quickness" ,
 	[counter_type_weakness] = "Might"
-};
+}};
 
 
 void
@@ -356,26 +359,26 @@ enum stat_type {
 };
 
 
-const char *
-STRINGTABLE_STATTYPE_SYMBOL[STAT_TYPE_COUNT] {
+std::array<const char * , STAT_TYPE_COUNT>
+STRINGTABLE_STATTYPE_SYMBOL = {{
 	[stat_type_none] = "[[symbol:stat_type_none]]" ,
 	[stat_type_hp_max] = "HPmax" ,
 	[stat_type_hp_current] = "HPcur" ,
 	[stat_type_strength] = "STR" ,
 	[stat_type_dexterity] =  "DEX" ,
 	[stat_type_wisdom] = "WIS" ,
-};
+}};
 
 
-const char *
-STRINGTABLE_STATTYPE_NAME[STAT_TYPE_COUNT] {
+std::array<const char * , STAT_TYPE_COUNT>
+STRINGTABLE_STATTYPE_NAME = {{
 	[stat_type_none] = "[[name:stat_type_none]]" ,
 	[stat_type_hp_max] = "Hitpoints Max" ,
 	[stat_type_hp_current] = "Hitpoints Current" ,
 	[stat_type_strength] = "Strength" ,
 	[stat_type_dexterity] =  "Dexterity" ,
 	[stat_type_wisdom] = "Wisdom" ,
-};
+}};
 
 
 enum rollmod_type {
