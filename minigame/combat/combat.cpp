@@ -393,53 +393,127 @@ enum rollmod_type {
 
 enum ability_type {
 	ability_type_none ,
-	ability_type_attack ,
+	ability_type_attack , // governed by the weapon, so the range(if I get to implement range) will be set to weapon's range
 	ability_type_instant ,
+	ability_type_apply_counters ,
 	ABILITY_TYPE_COUNT ,
 };
 
 
 // idea: `vector_counter_type` and `vector_rollmod`
 struct Ability {
-	const char * name;
-	enum ability_type type;
-	enum counter_type on_success_counter_type;
-	int const rollmod_add;
-	int const rollmod_multiply;
+	const char * name = "[[ability.name:none]]";
+	enum ability_type type = ability_type_none;
+	enum counter_type on_success_counter_type = counter_type_none;
+	enum rollmod_type rollmod_type = rollmod_type_none;
+	int rollmod_add = 0;
+	int rollmod_multiply = 0;
+	int range = 1;
+	void fprint(FILE * f);
+//	Ability() {};
+//	Ability(
+//			 const char * _name
+//			,const enum ability_type _type
+//			,enum rollmod_type _rollmod_type
+//			,const int _rollmod_add
+//			,const int _rollmod_multiply
+//			,const enum counter_type _on_success_counter_type
+//		   ) {
+//		name
+//			=
+//			_name ;
+//		type
+//			=
+//			_type ;
+//		on_success_counter_type
+//			=
+//			_on_success_counter_type ;
+//		rollmod_type
+//			=
+//			_rollmod_type;
+//		rollmod_add
+//			=
+//			_rollmod_add ;
+//		rollmod_multiply
+//			=
+//			_rollmod_multiply ;
+//
+//	}
 };
+
+void 
+Ability::fprint(FILE * f) {
+	fprintf( f , "%s(%d|%d) TH %d MULT %d"
+			,name
+			,type
+			,on_success_counter_type
+			,rollmod_add
+			,rollmod_multiply
+			);
+
+}
+
 
 typedef std::vector<const Ability *> VectorAbilityPointers;
 
-const std::vector<Ability> VECTOR_ABILITIES = {
+
+enum ability_id {
+	ability_none ,
+	ability_attack ,
+	ability_open_wounds ,
+	ability_weaken ,
+	ABILITY_COUNT ,
+};
+
+
+
+Ability ARRAY_ABILITIES[] = {
 	{
 		.name = "Attack" ,
 		.type = ability_type_attack ,
 		.on_success_counter_type = counter_type_none ,
+		.rollmod_type = rollmod_type_to_hit ,
 		.rollmod_add = 0 ,
-		.rollmod_multiply = 1 ,
+		.rollmod_multiply = 0 ,
+		.range = 1
 	} ,
 	{
 		.name = "Open Wounds" ,
 		.type = ability_type_attack ,
 		.on_success_counter_type = counter_type_bleed ,
+		.rollmod_type = rollmod_type_to_hit ,
 		.rollmod_add = -4 ,
 		.rollmod_multiply = 0 ,
+		.range = 1
 	} ,
 	{
 		.name = "Weaken" ,
 		.type = ability_type_instant ,
 		.on_success_counter_type = counter_type_weakness ,
-		.rollmod_add = -4 ,
+		.rollmod_type = rollmod_type_wisdom ,
+		.rollmod_add = -3 ,
 		.rollmod_multiply = 0 ,
-	}
+		.range = 1
+	} ,
+	{
+		.name = "Induce Poison" ,
+		.type = ability_type_instant ,
+		.on_success_counter_type = counter_type_poison ,
+		.rollmod_type = rollmod_type_wisdom ,
+		.rollmod_add = -5 ,
+		.rollmod_multiply = 1 ,
+		.range = 1
+	} ,
 };
+
+
 
 
 const VectorAbilityPointers
 VECTOR_ABILITY_POINTERS_DEFAULT = {
-	&(VECTOR_ABILITIES[0]) ,
-	&(VECTOR_ABILITIES[1]) ,
-	&(VECTOR_ABILITIES[2]) ,
+	&(ARRAY_ABILITIES[0]) ,
+	&(ARRAY_ABILITIES[1]) ,
+	&(ARRAY_ABILITIES[2]) ,
 };
 
 
@@ -488,9 +562,17 @@ struct CombatEntity {
 
 	bool is_dead() const { return ( stat.hp_current < 0); };
 
-	int get_hp_missing(void) const { return stat.hp_max - stat.hp_current;  }
-	int get_rollmod_strength(void) const { return (stat.strength); };
-	int get_rollmod_dexterity(void) const { return (stat.dexterity - get_counter_value(counter_type_weakness)); };
+	int get_hp_missing(void) const {
+		return (stat.hp_max
+				 - stat.hp_current);  }
+	int get_rollmod_strength(void) const {
+		return (stat.strength
+				 - get_counter_value(counter_type_weakness));
+	};
+	int get_rollmod_dexterity(void) const {
+		return (stat.dexterity
+			 - get_counter_value(counter_type_weakness));
+	};
 	int get_rollmod_wisdom(void) const { return stat.wisdom; };
 	int get_rollmod_to_hit(void) const  { return get_rollmod_dexterity(); };
 	int get_rollmod_defense(void) const { return get_rollmod_dexterity(); };
@@ -564,6 +646,25 @@ RollResult roll_attack(
 			(rollmod_attack - rollmod_defense)
 			,rollmod_damage ) ;
 }
+
+
+/*struct EffectToApply {
+	RollResult 
+};
+
+EffectToApply
+calculate_ability_use(
+		enum ability_id
+		,const CombatEntity & attacker
+		,const CombatEntity & target)
+{
+	switch(ability_id) {
+		
+		default:
+			fprintf( stderr , "[[unexpected ability_id: %d]]" , ability_type);
+	}
+}*/
+
 
 
 void
@@ -711,7 +812,11 @@ perform_example_combat(FILE * f)
 	int round = 0;
 	for( ; round < ROUND_COUNT ; ++round ) {
 		fprintf(f , "  round %d\n" , round);
-		select_fprint_vector_of_strings( stdout , you.vector_available_abilities_strings );
+		int selection = select_fprint_vector_of_strings( stdout , you.vector_available_abilities_strings ); //TODO
+		if( selection < 0 || selection >= (int)you.vector_available_abilities.size() ) { // I'm (probably unneccesarily) afraid of casting here
+			fprintf( f , "aborting, since you selected %d\n" , selection);
+			goto jump_end;
+		}
 		fprintf( f, "you hit:" );
 		const RollResult rr_atk_you = roll_attack( you , foe );
 		rr_atk_you.fprint(f);
@@ -734,6 +839,7 @@ perform_example_combat(FILE * f)
 		foe.fprint(f);
 		fprintf( f , "\n" );
 	}
+jump_end:
 	fprintf( f, "  Combat ended after %d rounds. Results:\n" , round );
 	fprintf( f , "you: " );
 	you.fprint(f);
