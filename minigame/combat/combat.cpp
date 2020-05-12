@@ -185,8 +185,8 @@ struct WeaponBase {
 };
 
 
-const WeaponBase
-TABLE_WEAPON_BASE[] = {
+
+const std::vector< WeaponBase > TABLE_WEAPON_BASE = {
 	{ .type=weapon_type_none, .range=1, .base_damage=1, .name = "None" } ,
 	{ .type=weapon_type_polearm , .to_hit = -3 , .range = 2, .base_damage = 2 , .name = "Training Spear" } ,
 	{ .type=weapon_type_sword   , .to_hit = -3 , .range = 1, .base_damage = 2 , .name = "Training Sword" } ,
@@ -198,13 +198,12 @@ TABLE_WEAPON_BASE[] = {
 	{ .type=weapon_type_ranged_thrower , .required_strength = 1 , .to_hit = -2 , .range = 5, .base_damage = 6 , .name = "Short Bow" } ,
 	{ .type=weapon_type_ranged_thrower , .required_strength = 5 , .to_hit = -2 , .range = 8, .base_damage = 12 , .name = "Long Bow" } ,
 };
-size_t const SIZEOF_TABLE_WEAPON_BASE (sizeof(TABLE_WEAPON_BASE)/sizeof(TABLE_WEAPON_BASE[0])) ;
 
 
-const struct WeaponBase *
+const WeaponBase *
 WeaponBase::weapon_base_get_pointer_from_id(size_t const id)
 {
-	assert( id < SIZEOF_TABLE_WEAPON_BASE );
+	assert( id < TABLE_WEAPON_BASE.size() );
 	return &(TABLE_WEAPON_BASE[id]);
 }
 
@@ -265,7 +264,7 @@ WeaponBase::fprint( FILE * f
 void
 display_table_weapon_base(FILE * f)
 {
-	for(size_t i = 0; i < SIZEOF_TABLE_WEAPON_BASE ; ++i ) {
+	for(size_t i = 0; i < TABLE_WEAPON_BASE.size() ; ++i ) {
 		fprintf(f , "%lu" , i );
 		TABLE_WEAPON_BASE[i].fprint(f);
 		fprintf(f , "\n" );
