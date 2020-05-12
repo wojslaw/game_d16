@@ -464,15 +464,15 @@ struct CombatEntity {
 		int dexterity = 1;
 		int wisdom = 1;
 	} stat;
-	int counter_array[COUNTER_TYPE_COUNT] = {0};
-	int max_stat[STAT_TYPE_COUNT] = {
+	std::array< int , COUNTER_TYPE_COUNT > counter_array = {0};
+	std::array< int , STAT_TYPE_COUNT > max_stat = {{
 		[stat_type_none] = 1 ,
 		[stat_type_hp_max] = 1 ,
 		[stat_type_hp_current] = 1 ,
 		[stat_type_strength] = 1 ,
 		[stat_type_dexterity] = 1 ,
 		[stat_type_wisdom] = 1 ,
-	};
+	}};
 
 	VectorAbilityPointers vector_available_abilities = VECTOR_ABILITY_POINTERS_DEFAULT;
 	std::vector< const char * >
