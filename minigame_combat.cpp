@@ -222,6 +222,8 @@ enum counter_type {
  // as in: a separate definition of counter_type
  // that would hold data on "is it halving per turn, or decrement. does it deal damage? and so on", to decouple things further
  // I also want to put all the stats in an array, to also have stat_type_strength etc.
+	counter_type_none ,
+	counter_type_damage , // this will be "missing health", and replaces "hp_current"
 	counter_type_poison ,
 	counter_type_bleed ,
 	counter_type_slowness ,
@@ -229,17 +231,22 @@ enum counter_type {
 	COUNTER_TYPE_COUNT ,
 };
 
+
 const char *
 STRINGTABLE_COUNTERTYPE_SYMBOL[COUNTER_TYPE_COUNT] {
-	[counter_type_poison] = "Pois" ,
-	[counter_type_bleed] = "Bled" ,
-	[counter_type_slowness] = "Slow" ,
-	[counter_type_weakness] = "Weak"
+	[counter_type_none] = "[[counter_type_none]]" ,
+	[counter_type_damage] = "RD",
+	[counter_type_poison] = "cP" ,
+	[counter_type_bleed] = "cB" ,
+	[counter_type_slowness] = "cS" ,
+	[counter_type_weakness] = "cW" ,
 };
 
 
 const char *
 STRINGTABLE_COUNTERTYPE_NAME[COUNTER_TYPE_COUNT] {
+	[counter_type_none] = "[[counter_type_none]]" ,
+	[counter_type_damage] = "ReceivedDamage",
 	[counter_type_poison] = "Poison" ,
 	[counter_type_bleed] = "Bleed" ,
 	[counter_type_slowness] = "Slowness" ,
@@ -247,7 +254,44 @@ STRINGTABLE_COUNTERTYPE_NAME[COUNTER_TYPE_COUNT] {
 };
 
 
+const char *
+STRINGTABLE_COUNTERTYPE_NAME_NEGATIVE[COUNTER_TYPE_COUNT] {
+	[counter_type_none] = "[[counter_type_none]]" ,
+	[counter_type_damage] = "Overheal",
+	[counter_type_poison] = "Antibodies(resist poison)" ,
+	[counter_type_bleed] = "Clotting(resist bleed)" ,
+	[counter_type_slowness] = "Quickness" ,
+	[counter_type_weakness] = "Might"
+};
+
+
+void
+fprint_counter_full_description(
+		 FILE * f
+		,enum counter_type const ct
+		,int const value)
+{
+	assert(ct > counter_type_none);
+	assert(ct > COUNTER_TYPE_COUNT);
+	const char * str
+		= value >= 0
+		? STRINGTABLE_COUNTERTYPE_NAME[ct]
+		: STRINGTABLE_COUNTERTYPE_NAME_NEGATIVE[ct];
+	int const normalized_value
+		= value >= 0
+		? value
+		: -value ;
+	fprintf( f , "(%s %d): %s %d"
+			,STRINGTABLE_COUNTERTYPE_SYMBOL[ct]
+			,normalized_value
+			,str
+			,value
+			);
+}
+
+
 enum stat_type {
+	stat_type_none ,
 	stat_type_hp_max ,
 	stat_type_hp_current ,
 	stat_type_strength ,
@@ -259,6 +303,7 @@ enum stat_type {
 
 const char *
 STRINGTABLE_STATTYPE_SYMBOL[STAT_TYPE_COUNT] {
+	[stat_type_none] = "[[symbol:stat_type_none]]" ,
 	[stat_type_hp_max] = "HPmax" ,
 	[stat_type_hp_current] = "HPcur" ,
 	[stat_type_strength] = "STR" ,
@@ -269,12 +314,56 @@ STRINGTABLE_STATTYPE_SYMBOL[STAT_TYPE_COUNT] {
 
 const char *
 STRINGTABLE_STATTYPE_NAME[STAT_TYPE_COUNT] {
+	[stat_type_none] = "[[name:stat_type_none]]" ,
 	[stat_type_hp_max] = "Hitpoints Max" ,
 	[stat_type_hp_current] = "Hitpoints Current" ,
 	[stat_type_strength] = "Strength" ,
 	[stat_type_dexterity] =  "Dexterity" ,
 	[stat_type_wisdom] = "Wisdom" ,
 };
+
+
+enum rollmod_type {
+	rollmod_type_none ,
+	rollmod_type_to_hit ,
+	rollmod_type_damage ,
+	rollmod_type_strength ,
+	rollmod_type_dexterity ,
+	rollmod_type_wisdom ,
+	ROLLMOD_TYPE_COUNT ,
+};
+
+
+enum ability_type {
+	ability_type_none ,
+	ability_type_attack ,
+	ability_type_instant ,
+	ABILITY_TYPE_COUNT ,
+};
+
+
+// idea: `vector_counter_type` and `vector_rollmod`
+struct Ability {
+	const char * name;
+	enum ability_type type;
+	enum counter_type on_success_counter_type;
+	int const rollmod_add;
+	int const rollmod_multiply;
+};
+
+
+struct Ability
+TABLE_ABILITY[] = {
+	{
+		.name = "Open Wounds" ,
+		.type = ability_type_attack ,
+		.on_success_counter_type = counter_type_bleed ,
+		.rollmod_add = -2 ,
+		.rollmod_multiply = 1 ,
+	}
+};
+
+
 
 
 struct CombatEntity {
@@ -286,9 +375,18 @@ struct CombatEntity {
 		int wisdom = 1;
 	} stat;
 	int counter_array[COUNTER_TYPE_COUNT] = {0};
+	int max_stat[STAT_TYPE_COUNT] = {
+		[stat_type_none] = 1 ,
+		[stat_type_hp_max] = 1 ,
+		[stat_type_hp_current] = 1 ,
+		[stat_type_strength] = 1 ,
+		[stat_type_dexterity] = 1 ,
+		[stat_type_wisdom] = 1 ,
+	};
 
 	//methods
 	void fprint(FILE * f);
+	void fprint_hp(FILE * f);
 	void fprint_all_counters(FILE * f);
 	void fprint_nonzero_counters(FILE * f);
 
@@ -298,11 +396,14 @@ struct CombatEntity {
 	int get_rollmod_strength(void) const { return (stat.strength); };
 	int get_rollmod_dexterity(void) const { return (stat.dexterity - get_counter_value(counter_type_weakness)); };
 	int get_rollmod_wisdom(void) const { return stat.wisdom; };
-	int get_rollmod_attack(void) const  { return get_rollmod_dexterity(); };
+	int get_rollmod_to_hit(void) const  { return get_rollmod_dexterity(); };
 	int get_rollmod_defense(void) const { return get_rollmod_dexterity(); };
 	int get_rollmod_damage(void) const { return get_rollmod_strength(); };
 	int get_counter_value(enum counter_type ct) const;
 	int * ref_counter(enum counter_type ct);
+	int get_rollmod(enum rollmod_type const rt);
+	int get_stat(enum stat_type const st);
+	int get_max_stat(enum stat_type const st);
 
 	void receive_damage(int damage);
 	void receive_attack(const CombatEntity * attacker);
@@ -313,11 +414,54 @@ struct CombatEntity {
 };
 
 
+int CombatEntity::get_rollmod(enum rollmod_type const rt) {
+	int rollmod = 0;
+	switch(rt) {
+		case rollmod_type_none:
+			break;
+		case rollmod_type_to_hit:
+			rollmod = get_rollmod_to_hit();
+			break;
+		case rollmod_type_damage:
+			rollmod = get_rollmod_damage();
+			break;
+		case rollmod_type_strength:
+			rollmod = get_rollmod_strength();
+			break;
+		case rollmod_type_dexterity:
+			rollmod = get_rollmod_dexterity();
+			break;
+		case rollmod_type_wisdom:
+			rollmod = get_rollmod_wisdom();
+			break;
+		default:
+			fprintf( stderr , "get_rollmod:unexpected rollmod_type = %d" , rt );
+	}
+	return rollmod;
+}
+
+
+int
+CombatEntity::get_stat(enum stat_type const st) {
+	assert( st > stat_type_none );
+	assert( st < STAT_TYPE_COUNT );
+	return 0; // TODO
+}
+
+
+int
+CombatEntity::get_max_stat(enum stat_type const st) {
+	assert( st > stat_type_none );
+	assert( st < STAT_TYPE_COUNT );
+	return max_stat[st];
+}
+
+
 RollResult roll_attack(
 		 const CombatEntity & attacker
 		,const CombatEntity & target
 		) {
-	int const rollmod_attack = attacker.get_rollmod_attack();
+	int const rollmod_attack = attacker.get_rollmod_to_hit();
 	int const rollmod_defense = target.get_rollmod_defense();
 	int const rollmod_damage = attacker.get_rollmod_damage();
 	return RollResult(
@@ -370,13 +514,29 @@ CombatEntity::fprint_all_counters(FILE * f)  {
 }
 
 
+void
+CombatEntity::fprint_hp(FILE * f) {
+	fprintf( f , "(hp: %d/%d)"
+			,stat.hp_current
+			,stat.hp_max
+			);
+}
+
+
 void CombatEntity::receive_damage(int damage) {
 	if( damage < 0 ) {
 		damage = 0;
 	}
 	stat.hp_current -= damage;
+	(*ref_counter(counter_type_damage)) += damage;
 }
 
+
+
+typedef int counter_function_reduction(int * counter);
+
+counter_function_reduction counter_perform_halving;
+counter_function_reduction counter_perform_decrement;
 
 int
 counter_perform_halving(int * counter) {
@@ -396,10 +556,11 @@ counter_perform_halving(int * counter) {
 }
 
 
-void counter_decrement(int * counter) {
+int counter_perform_decrement(int * counter) {
 	if((*counter) > 0) {
 		--(*counter);
 	}
+	return (*counter);
 }
 
 
@@ -423,8 +584,8 @@ CombatEntity::perform_post_counters_per_round_effects(void) {
 	receive_damage( counter_perform_halving(ref_counter(counter_type_poison)) );
 	receive_damage( counter_perform_halving(ref_counter(counter_type_bleed)) );
 	// only reduce
-	counter_decrement(ref_counter(counter_type_slowness));
-	counter_decrement(ref_counter(counter_type_weakness));
+	counter_perform_decrement(ref_counter(counter_type_slowness));
+	counter_perform_decrement(ref_counter(counter_type_weakness));
 }
 
 
@@ -433,7 +594,7 @@ perform_example_combat(FILE * f)
 {
 	struct CombatEntity you;
 	you.stat.dexterity = 3;
-	you.stat.strength = 0;
+	you.stat.strength = 4;
 	you.stat.hp_max = 16;
 	you.stat.hp_current = 16;
 	struct CombatEntity foe;
