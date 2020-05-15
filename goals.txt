@@ -12,3 +12,8 @@ Make a separate "demo_game(.cpp|.h)", where there will be a simple gathering/tra
   2. success_level_multiplier( this will be multiplied times the success level, that is the value after rounding )
 
 hmm, now that I think of it - maybe this would be too much unnecessary complexity?
+
+
+in
+	d16:cpp:calc_d16_score
+currently, a multiply of 0 will clearly ensure the success is always 0, but maybe it should default to 1? or, if multiply is less than 1, then it is calculated normally, but success cannot be raised higher than 1?

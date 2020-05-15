@@ -16,11 +16,11 @@ fprint_vector_of_strings(
 				, s );
 		++i;
 	}
-	assert((size_t)i != vector_strings.size() );
+	assert((size_t)i == vector_strings.size() );
 	/* if( (size_t)i != vector_strings.size() ) { */
 	/* 	fprintf( stderr , "BUG? in fprint_vector_of_strings(): (size_t)i != vector_strings.size()\n" ); */
 	/* } */
-	assert( i != (int)vector_strings.size() );
+	assert( i == (int)vector_strings.size() );
 	/* if( i != (int)vector_strings.size() ) { */
 	/* 	fprintf( stderr , "BUG? in fprint_vector_of_strings(): i != (int)vector_strings.size()\n" ); */
 	/* } */
@@ -519,10 +519,35 @@ enum ability_type {
 	ability_type_none ,
 	ability_type_attack , // governed by the type of weapon, so the range(if I get to implement range) will be set to weapon's range
 	ability_type_instant ,
+	ability_type_magic ,
 	ability_type_apply_counters ,
 	ABILITY_TYPE_COUNT ,
 };
 
+
+struct AbilityResult {
+	enum counter_type counter_type;
+	int count;
+	struct RollResult roll_result;
+	AbilityResult(
+			 struct RollResult _roll_result
+			,enum counter_type _counter_type) {
+		roll_result = _roll_result;
+		counter_type = _counter_type;
+		count = roll_result.get_success_level();
+	}
+	void fprint( FILE * f ) const;
+};
+
+void
+AbilityResult::fprint( FILE * f ) const {
+	fprintf( f , "(AbilityResult ct %d cnt %d ; "
+			, counter_type
+			, count );
+	roll_result.fprint(f);
+	fprintf( f , ")" );
+	// roll_result;
+}
 
 // idea: `vector_counter_type` and `vector_rollmod`
 struct Ability {
@@ -535,51 +560,13 @@ struct Ability {
 	int rollmod_multiply = 0;
 	int range = 1;
 	void fprint(FILE * f);
-//	Ability() {};
-//	Ability(
-//			 const char * _name
-//			,const enum ability_type _type
-//			,enum rollmod_type _rollmod_type
-//			,const int _rollmod_add
-//			,const int _rollmod_multiply
-//			,const enum counter_type _on_success_counter_type
-//		   ) {
-//		name
-//			=
-//			_name ;
-//		type
-//			=
-//			_type ;
-//		on_success_counter_type
-//			=
-//			_on_success_counter_type ;
-//		rollmod_type
-//			=
-//			_rollmod_type;
-//		rollmod_add
-//			=
-//			_rollmod_add ;
-//		rollmod_multiply
-//			=
-//			_rollmod_multiply ;
-//
-//	}
+
+	struct AbilityResult
+		make_roll_result(int const score_add , int const score_multiply) const;
 };
 
-void 
-Ability::fprint(FILE * f) {
-	fprintf( f , "%s(%d|%d) TH %d MULT %d"
-			,name
-			,type
-			,on_success_counter_type
-			,rollmod_add
-			,rollmod_multiply
-			);
 
-}
-
-
-typedef std::vector<const Ability *> VectorAbilityPointers;
+typedef std::vector<Ability *> VectorAbilityPointers;
 
 
 enum ability_id {
@@ -590,13 +577,26 @@ enum ability_id {
 	ABILITY_COUNT ,
 };
 
+void 
+Ability::fprint(FILE * f) {
+	fprintf( f , "%s(%d|%d) TH %d MULT %d"
+			,name
+			,type
+			,on_success_counter_type
+			,rollmod_add
+			,rollmod_multiply
+		   );
+}
+
+
+
 
 
 Ability ARRAY_ABILITIES[] = {
 	{
 		.name = "Attack" ,
 		.type = ability_type_attack ,
-		.on_success_counter_type = counter_type_none ,
+		.on_success_counter_type = counter_type_damage ,
 		.rollmod_type = rollmod_type_to_hit ,
 		.rollmod_add = 0 ,
 		.rollmod_multiply = 0 ,
@@ -613,7 +613,7 @@ Ability ARRAY_ABILITIES[] = {
 	} ,
 	{
 		.name = "Weaken" ,
-		.type = ability_type_instant ,
+		.type = ability_type_magic ,
 		.on_success_counter_type = counter_type_weakness ,
 		.rollmod_type = rollmod_type_wisdom ,
 		.rollmod_add = -3 ,
@@ -622,7 +622,7 @@ Ability ARRAY_ABILITIES[] = {
 	} ,
 	{
 		.name = "Induce Poison" ,
-		.type = ability_type_instant ,
+		.type = ability_type_magic ,
 		.on_success_counter_type = counter_type_poison ,
 		.rollmod_type = rollmod_type_wisdom ,
 		.rollmod_add = -5 ,
@@ -632,6 +632,15 @@ Ability ARRAY_ABILITIES[] = {
 };
 
 
+AbilityResult
+Ability::make_roll_result(int const score_add , int const score_multiply) const {
+	RollResult roll_result = RollResult(score_add , score_multiply);
+	AbilityResult ability_result = {
+		 roll_result
+		,on_success_counter_type
+	};
+	return ability_result;
+}
 
 
 const VectorAbilityPointers
@@ -656,7 +665,7 @@ vector_ability_pointer_get_vector_of_strings(
 
 
 struct CombatEntity {
-	struct {
+	struct { /* TODO swap from this, to the arrays */
 		int hp_max = 1;
 		int hp_current = 1;
 		int strength = 1;
@@ -665,7 +674,15 @@ struct CombatEntity {
 	} stat;
 	std::array< int , COUNTER_TYPE_COUNT > counter_array = {0};
 	std::array< int , STAT_TYPE_COUNT > max_stat = {{
-		[stat_type_none] = 1 ,
+		[stat_type_none] = 0 ,
+		[stat_type_hp_max] = 1 ,
+		[stat_type_hp_current] = 1 ,
+		[stat_type_strength] = 1 ,
+		[stat_type_dexterity] = 1 ,
+		[stat_type_wisdom] = 1 ,
+	}};
+	std::array< int , STAT_TYPE_COUNT > arr_stat = {{
+		[stat_type_none] = 0 ,
 		[stat_type_hp_max] = 1 ,
 		[stat_type_hp_current] = 1 ,
 		[stat_type_strength] = 1 ,
@@ -678,6 +695,7 @@ struct CombatEntity {
 		vector_available_abilities_strings
 		= vector_ability_pointer_get_vector_of_strings(
 				vector_available_abilities );
+	Ability * ptr_available_ability( int const id ) const;
 
 	//methods
 	void fprint(FILE * f);
@@ -685,11 +703,14 @@ struct CombatEntity {
 	void fprint_all_counters(FILE * f);
 	void fprint_nonzero_counters(FILE * f);
 
-	bool is_dead() const { return ( stat.hp_current < 0); };
+	bool is_dead() const {
+		return (
+				get_counter_value(counter_type_damage)
+				>
+				get_stat(stat_type_hp_max)
+		);
+	};
 
-	int get_hp_missing(void) const {
-		return (stat.hp_max
-				 - stat.hp_current);  }
 	int get_rollmod_strength(void) const {
 		return (stat.strength
 				 - get_counter_value(counter_type_weakness));
@@ -698,18 +719,19 @@ struct CombatEntity {
 		return (stat.dexterity
 			 - get_counter_value(counter_type_weakness));
 	};
-	int get_rollmod_wisdom(void) const { return stat.wisdom; };
+	int get_rollmod_wisdom(void) const { return stat.wisdom; }; 
+#define get_rollmod_magic get_rollmod_wisdom // TODO separate 
 	int get_rollmod_to_hit(void) const  { return get_rollmod_dexterity(); };
 	int get_rollmod_defense(void) const { return get_rollmod_dexterity(); };
 	int get_rollmod_damage(void) const { return get_rollmod_strength(); };
 	int get_counter_value(enum counter_type ct) const;
-	int * ref_counter(enum counter_type ct);
+	int * ptr_counter(enum counter_type ct);
 	int get_rollmod(enum rollmod_type const rt);
-	int get_stat(enum stat_type const st);
+	int get_stat(enum stat_type const st) const;
 	int get_max_stat(enum stat_type const st);
 
 	void receive_damage(int damage);
-	void receive_attack(const CombatEntity * attacker);
+	void apply_ability_result( const AbilityResult &ability_result );
 
 	void perform_post_counters_per_round_effects(void);
 
@@ -745,10 +767,10 @@ int CombatEntity::get_rollmod(enum rollmod_type const rt) {
 
 
 int
-CombatEntity::get_stat(enum stat_type const st) {
+CombatEntity::get_stat(enum stat_type const st) const {
 	assert( st > stat_type_none );
 	assert( st < STAT_TYPE_COUNT );
-	return 0; // TODO
+	return arr_stat[st]; // TODO
 }
 
 
@@ -770,6 +792,17 @@ RollResult roll_attack(
 	return RollResult(
 			(rollmod_attack - rollmod_defense)
 			,rollmod_damage ) ;
+}
+
+
+Ability *
+CombatEntity::ptr_available_ability(
+		int const id
+		) const {
+	assert( id >= 0 );
+	assert( id < (int)vector_available_abilities.size() );
+	Ability * ref = vector_available_abilities[id];
+	return ref;
 }
 
 
@@ -850,7 +883,17 @@ void CombatEntity::receive_damage(int damage) {
 		damage = 0;
 	}
 	stat.hp_current -= damage;
-	(*ref_counter(counter_type_damage)) += damage;
+	(*ptr_counter(counter_type_damage)) += damage;
+}
+
+
+void
+CombatEntity::apply_ability_result(
+		const AbilityResult &ability_result
+		) {
+	auto ptr = ptr_counter(ability_result.counter_type);
+	(*ptr) += ability_result.count;
+	// TODO
 }
 
 
@@ -886,7 +929,8 @@ int counter_perform_decrement(int * counter) {
 }
 
 
-int * CombatEntity::ref_counter(enum counter_type ct) {
+int * CombatEntity::ptr_counter(enum counter_type ct) {
+	assert( ct > counter_type_none );
 	assert( ct >= 0);
 	assert( ct < COUNTER_TYPE_COUNT);
 	return &(counter_array[ct]);
@@ -903,12 +947,48 @@ int CombatEntity::get_counter_value(enum counter_type ct) const {
 void
 CombatEntity::perform_post_counters_per_round_effects(void) {
 	// damage-over-time
-	receive_damage( counter_perform_halving(ref_counter(counter_type_poison)) );
-	receive_damage( counter_perform_halving(ref_counter(counter_type_bleed)) );
+	receive_damage( counter_perform_halving(ptr_counter(counter_type_poison)) );
+	receive_damage( counter_perform_halving(ptr_counter(counter_type_bleed)) );
 	// only reduce
-	counter_perform_decrement(ref_counter(counter_type_slowness));
-	counter_perform_decrement(ref_counter(counter_type_weakness));
+	counter_perform_decrement(ptr_counter(counter_type_slowness));
+	counter_perform_decrement(ptr_counter(counter_type_weakness));
 }
+
+
+
+AbilityResult
+roll_ability_result(
+		 const Ability * ptr_ability
+		,const CombatEntity &actor
+		,const CombatEntity &target) {
+	/* TODO handling different types of stats for different abilities */
+	int bonus_actor = 0;
+	int bonus_target = 0;
+	int score_multiply = 1;
+	switch(ptr_ability->type) {
+		case ability_type_attack:
+			bonus_actor = actor.get_rollmod_to_hit();
+			bonus_target = target.get_rollmod_defense();
+			score_multiply = actor.get_rollmod_damage();
+			break;
+		case ability_type_magic:
+			bonus_actor = actor.get_rollmod_magic();
+			break;
+		default:
+			break;
+	}
+	return ptr_ability->make_roll_result(
+			 (bonus_actor - bonus_target)
+			,score_multiply);
+}
+
+
+
+
+
+
+
+
 
 
 void
@@ -919,12 +999,14 @@ perform_example_combat(FILE * f)
 	you.stat.strength = 4;
 	you.stat.hp_max = 16;
 	you.stat.hp_current = 16;
+	you.arr_stat[stat_type_hp_max] = 16;
 	struct CombatEntity foe;
 	foe.stat.hp_max = 12;
 	foe.stat.hp_current = 12;
+	foe.arr_stat[stat_type_hp_max] = 4;
 	foe.stat.strength = 4;
-	(*foe.ref_counter(counter_type_bleed)) = 2;
-	(*foe.ref_counter(counter_type_weakness)) = 4;
+	(*foe.ptr_counter(counter_type_bleed)) = 2;
+	(*foe.ptr_counter(counter_type_weakness)) = 4;
 
 	fprintf( f , "you: " );
 	you.fprint(f);
@@ -942,17 +1024,23 @@ perform_example_combat(FILE * f)
 			fprintf( f , "aborting, since you selected %d\n" , selection);
 			goto jump_end;
 		}
+		fprintf( f , "selected %d\n" , selection);
 		fprintf( f, "you hit:" );
-		const RollResult rr_atk_you = roll_attack( you , foe );
-		rr_atk_you.fprint(f);
+		const AbilityResult you_ability_result = roll_ability_result( you.ptr_available_ability(selection) , you , foe );
+		you_ability_result.fprint( f );
 		fprintf( f , "\n" );
 		fprintf( f, "foe hits:" );
 		const RollResult rr_atk_foe = roll_attack( foe , you );
 		rr_atk_foe.fprint(f);
 		fprintf( f , "\n" );
-		foe.receive_damage( rr_atk_you.get_success_level() );
+		foe.apply_ability_result( you_ability_result );
 		you.receive_damage( rr_atk_foe.get_success_level() );
-		if( you.is_dead() || foe.is_dead() ) {
+		if( you.is_dead() ) {
+			fprintf( f , "you died\n" );
+			break;
+		}
+		if( foe.is_dead() ) {
+			fprintf( f , "foe died\n" );
 			break;
 		}
 		you.perform_post_counters_per_round_effects();

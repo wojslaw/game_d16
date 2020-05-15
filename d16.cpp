@@ -7,6 +7,7 @@ calc_d16_score(
 		,int const multiply
 		)
 {
+	/* currently, a multiply of 0 will clearly ensure the success is always 0, but maybe it should default to 1? or, if multiply is less than 1, then it is calculated normally, but success cannot be raised higher than 1? */
 	return
 		add > 0
 		? ((DEFAULT_ADDER + add) * multiply)

@@ -4,5 +4,11 @@ HEADERS=d16.h  minigame/crafting/crafting.h  minigame/combat/combat.h
 $(APPNAME): $(SOURCES) $(HEADERS)
 	g++ -o $(APPNAME) -Wall -Wextra $(SOURCES)
 
+nofile: $(SOURCES) $(HEADERS)
+	g++ -o /dev/null -Wall -Wextra $(SOURCES)
+
+
 run: $(APPNAME)
 	./$(APPNAME)
+
+.phony: nofile
