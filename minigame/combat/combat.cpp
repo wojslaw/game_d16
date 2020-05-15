@@ -191,7 +191,9 @@ struct WeaponBase {
 
 
 
-const std::vector< WeaponBase > TABLE_WEAPON_BASE = {
+const std::vector< WeaponBase >
+TABLE_WEAPON_BASE = {
+
 	{
 		.type=weapon_type_none,
 		.range=1,
