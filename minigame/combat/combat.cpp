@@ -56,6 +56,7 @@ enum weapon_type {
 	weapon_type_axe ,
 	weapon_type_polearm ,
 	weapon_type_club ,
+	weapon_type_throwable ,
 	weapon_type_ranged_thrower ,
 	SIZEOF_STRINGTABLE_WEAPON_TYPE ,
 };
@@ -68,6 +69,7 @@ STRINGTABLE_WEAPON_TYPE = {{
 	[weapon_type_axe] = "axe",
 	[weapon_type_polearm] = "polearm",
 	[weapon_type_club] = "club",
+	[weapon_type_throwable] = "throwable" ,
 	[weapon_type_ranged_thrower] = "ranged_thrower" ,
 }};
 
@@ -170,10 +172,13 @@ TABLE_TRAINING_TYPE[] {
 
 struct WeaponBase {
 	enum weapon_type type = weapon_type_none;
+	bool handedness_1 = true;
+	bool handedness_2 = true;
 	int required_strength = 0;
 	int required_dexterity = 0;
 	int required_wisdom = 0;
 	int to_hit = 0;
+	int twohanded_to_hit = 0;
 	int range = 0;
 	int base_damage = 0;
 	const char * name = NULL;
@@ -191,12 +196,13 @@ const std::vector< WeaponBase > TABLE_WEAPON_BASE = {
 	{ .type=weapon_type_polearm , .to_hit = -3 , .range = 2, .base_damage = 2 , .name = "Training Spear" } ,
 	{ .type=weapon_type_sword   , .to_hit = -3 , .range = 1, .base_damage = 2 , .name = "Training Sword" } ,
 	{ .type=weapon_type_axe     , .to_hit = -3 , .range = 1, .base_damage = 2 , .name = "Training Axe" } ,
-	{ .type=weapon_type_polearm , .range = 3, .base_damage = 6 , .name = "Spear" } ,
-	{ .type=weapon_type_sword   , .range = 1, .base_damage = 3 , .name = "Shortsword" } ,
-	{ .type=weapon_type_axe , .required_strength = 2 , .to_hit = -2 , .range = 1, .base_damage = 5 , .name = "Lumber Axe" } ,
-	{ .type=weapon_type_ranged_thrower , .required_strength = 0 , .to_hit = 0 , .range = 6, .base_damage = 6 , .name = "Crossbow" } ,
-	{ .type=weapon_type_ranged_thrower , .required_strength = 1 , .to_hit = -2 , .range = 5, .base_damage = 6 , .name = "Short Bow" } ,
-	{ .type=weapon_type_ranged_thrower , .required_strength = 5 , .to_hit = -2 , .range = 8, .base_damage = 12 , .name = "Long Bow" } ,
+	{ .type=weapon_type_polearm , .twohanded_to_hit=2 , .range = 3 , .base_damage = 6 , .name = "Spear" } ,
+	{ .type=weapon_type_sword   , .range = 1 , .base_damage = 3 , .name = "Shortsword" } ,
+	{ .type=weapon_type_axe , .required_strength = 2 , .to_hit =-4 , .twohanded_to_hit=3 , .range = 1, .base_damage = 5 , .name = "Lumber Axe" } ,
+	{ .type=weapon_type_ranged_thrower , .handedness_1=false , .required_strength = 1 , .to_hit = 0 , .range = 6, .base_damage = 6 , .name = "Crossbow" } ,
+	{ .type=weapon_type_ranged_thrower , .handedness_1=false , .required_strength = 1 , .to_hit = -2 , .range = 5, .base_damage = 6 , .name = "Short Bow" } ,
+	{ .type=weapon_type_ranged_thrower , .handedness_1=false , .required_strength = 5 , .to_hit = -2 , .range = 8, .base_damage = 12 , .name = "Long Bow" } ,
+	{ .type=weapon_type_throwable , .handedness_2=false , .required_strength = 1 , .to_hit = -2 , .range = 4, .base_damage = 4 , .name = "Stone" } ,
 };
 
 
@@ -286,6 +292,15 @@ enum counter_type {
 	COUNTER_TYPE_COUNT ,
 };
 
+
+enum targeting_type {
+	targeting_type_none ,
+	targeting_type_self ,
+	targeting_type_enemy ,
+	targeting_type_friend ,
+	targeting_type_area ,
+	TARGETING_TYPE_COUNT ,
+};
 
 
 
@@ -406,6 +421,7 @@ struct Ability {
 	enum ability_type type = ability_type_none;
 	enum counter_type on_success_counter_type = counter_type_none;
 	enum rollmod_type rollmod_type = rollmod_type_none;
+	enum targeting_type targeting_type = targeting_type_none;
 	int rollmod_add = 0;
 	int rollmod_multiply = 0;
 	int range = 1;
