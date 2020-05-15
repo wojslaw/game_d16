@@ -230,7 +230,7 @@ TABLE_WEAPON_BASE = {
 	{
 		.type=weapon_type_polearm ,
 		.twohanded_to_hit=2 ,
-		.range = 3 ,
+		.range = 2 ,
 		.base_damage = 6 ,
 		.name = "Spear" 
 	},
@@ -302,23 +302,44 @@ WeaponBase::weapon_base_get_pointer_from_id(size_t const id)
 }
 
 
+struct WeaponEntity;
+typedef struct WeaponEntity * pointer_weapon;
 
-struct Weapon {
+enum weaponentity_stat_type {
+	weaponentity_stat_quality ,
+	weaponentity_stat_durability_max ,
+	weaponentity_stat_durability_current ,
+	WEAPONENTITY_STAT_COUNT ,
+};
+
+
+struct WeaponEntity {
 	size_t weapon_base_id = 0;
-	int quality = 0;
-	int durability_max = 1;
-	int durability_current = 1;
+	bool is_breakable = true;
+	int stat[WEAPONENTITY_STAT_COUNT] = {
+		[weaponentity_stat_quality] = 0 ,
+		[weaponentity_stat_durability_max] = 1 ,
+		[weaponentity_stat_durability_current] = 1 ,
+	};
 	void fprint(FILE * f);
+	void fprint_stat(FILE * f);
+};
+
+
+const char * STRINGTABLE_WEAPONENTITY_STAT[] = {
+	[weaponentity_stat_quality] = "quality" ,
+	[weaponentity_stat_durability_max] = "durability_max" ,
+	[weaponentity_stat_durability_current] = "durability_current" ,
 };
 
 
 void
-Weapon::fprint(FILE * f) {
-	fprintf( f , "weapon:{q%d,durability %d/%d,base[%#lx]:{"
-			, quality
-			, durability_max
-			, durability_current 
-			, weapon_base_id
+WeaponEntity::fprint(FILE * f) {
+	fprintf( f , "WeaponEntity:{q %d,d %d/%d,base[0x%lx]:{"
+			,stat[weaponentity_stat_quality]
+			,stat[weaponentity_stat_durability_max]
+			,stat[weaponentity_stat_durability_current]
+			,weapon_base_id
 		   );
 	const struct WeaponBase * ptr_weaponbase = WeaponBase::weapon_base_get_pointer_from_id(weapon_base_id);
 	ptr_weaponbase->fprint(f);
@@ -496,7 +517,7 @@ enum rollmod_type {
 
 enum ability_type {
 	ability_type_none ,
-	ability_type_attack , // governed by the weapon, so the range(if I get to implement range) will be set to weapon's range
+	ability_type_attack , // governed by the type of weapon, so the range(if I get to implement range) will be set to weapon's range
 	ability_type_instant ,
 	ability_type_apply_counters ,
 	ABILITY_TYPE_COUNT ,
