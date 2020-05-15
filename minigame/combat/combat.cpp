@@ -192,17 +192,101 @@ struct WeaponBase {
 
 
 const std::vector< WeaponBase > TABLE_WEAPON_BASE = {
-	{ .type=weapon_type_none, .range=1, .base_damage=1, .name = "None" } ,
-	{ .type=weapon_type_polearm , .to_hit = -3 , .range = 2, .base_damage = 2 , .name = "Training Spear" } ,
-	{ .type=weapon_type_sword   , .to_hit = -3 , .range = 1, .base_damage = 2 , .name = "Training Sword" } ,
-	{ .type=weapon_type_axe     , .to_hit = -3 , .range = 1, .base_damage = 2 , .name = "Training Axe" } ,
-	{ .type=weapon_type_polearm , .twohanded_to_hit=2 , .range = 3 , .base_damage = 6 , .name = "Spear" } ,
-	{ .type=weapon_type_sword   , .range = 1 , .base_damage = 3 , .name = "Shortsword" } ,
-	{ .type=weapon_type_axe , .required_strength = 2 , .to_hit =-4 , .twohanded_to_hit=3 , .range = 1, .base_damage = 5 , .name = "Lumber Axe" } ,
-	{ .type=weapon_type_ranged_thrower , .handedness_1=false , .required_strength = 1 , .to_hit = 0 , .range = 6, .base_damage = 6 , .name = "Crossbow" } ,
-	{ .type=weapon_type_ranged_thrower , .handedness_1=false , .required_strength = 1 , .to_hit = -2 , .range = 5, .base_damage = 6 , .name = "Short Bow" } ,
-	{ .type=weapon_type_ranged_thrower , .handedness_1=false , .required_strength = 5 , .to_hit = -2 , .range = 8, .base_damage = 12 , .name = "Long Bow" } ,
-	{ .type=weapon_type_throwable , .handedness_2=false , .required_strength = 1 , .to_hit = -2 , .range = 4, .base_damage = 4 , .name = "Stone" } ,
+	{
+		.type=weapon_type_none,
+		.range=1,
+		.base_damage=1,
+		.name = "None" 
+	},
+
+	{
+		.type=weapon_type_polearm ,
+		.to_hit = -3 ,
+		.range = 2,
+		.base_damage = 2 ,
+		.name = "Training Spear" 
+	},
+
+	{
+		.type=weapon_type_sword   ,
+		.to_hit = -3 ,
+		.range = 1,
+		.base_damage = 2 ,
+		.name = "Training Sword" 
+	},
+
+	{
+		.type=weapon_type_axe     ,
+		.to_hit = -3 ,
+		.range = 1,
+		.base_damage = 2 ,
+		.name = "Training Axe" 
+	},
+
+	{
+		.type=weapon_type_polearm ,
+		.twohanded_to_hit=2 ,
+		.range = 3 ,
+		.base_damage = 6 ,
+		.name = "Spear" 
+	},
+
+	{
+		.type=weapon_type_sword   ,
+		.range = 1 ,
+		.base_damage = 3 ,
+		.name = "Shortsword" 
+	},
+
+	{
+		.type=weapon_type_axe ,
+		.required_strength = 2 ,
+		.to_hit =-4 ,
+		.twohanded_to_hit=3 ,
+		.range = 1,
+		.base_damage = 5 ,
+		.name = "Lumber Axe" 
+	},
+
+	{
+		.type=weapon_type_ranged_thrower ,
+		.handedness_1=false ,
+		.required_strength = 1 ,
+		.to_hit = 0 ,
+		.range = 6,
+		.base_damage = 6 ,
+		.name = "Crossbow" 
+	},
+
+	{
+		.type=weapon_type_ranged_thrower ,
+		.handedness_1=false ,
+		.required_strength = 1 ,
+		.to_hit = -2 ,
+		.range = 5,
+		.base_damage = 6 ,
+		.name = "Short Bow" 
+	},
+	{
+		.type=weapon_type_ranged_thrower ,
+		.handedness_1=false ,
+		.required_strength = 5 ,
+		.to_hit = -2 ,
+		.range = 8,
+		.base_damage = 12 ,
+		.name = "Long Bow" 
+	},
+
+	{
+		.type=weapon_type_throwable ,
+		.handedness_2=false ,
+		.required_strength = 1 ,
+		.to_hit = -2 ,
+		.range = 4,
+		.base_damage = 4 ,
+		.name = "Stone"
+	} ,
+
 };
 
 
