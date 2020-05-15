@@ -599,7 +599,7 @@ Ability ARRAY_ABILITIES[] = {
 		.on_success_counter_type = counter_type_damage ,
 		.rollmod_type = rollmod_type_to_hit ,
 		.rollmod_add = 0 ,
-		.rollmod_multiply = 0 ,
+		.rollmod_multiply = 1 ,
 		.range = 1
 	} ,
 	{
@@ -617,7 +617,7 @@ Ability ARRAY_ABILITIES[] = {
 		.on_success_counter_type = counter_type_weakness ,
 		.rollmod_type = rollmod_type_wisdom ,
 		.rollmod_add = -3 ,
-		.rollmod_multiply = 0 ,
+		.rollmod_multiply = 2 ,
 		.range = 1
 	} ,
 	{
@@ -631,11 +631,29 @@ Ability ARRAY_ABILITIES[] = {
 	} ,
 };
 
+const size_t SIZEOF_TABLE_ABILITY = sizeof(ARRAY_ABILITIES) / sizeof(ARRAY_ABILITIES[0]);
+
+
+void
+CHECK_TABLE_ABILITY(void) {
+	for( auto &a : ARRAY_ABILITIES ) {
+		if( a.type == ability_type_none ) {
+			fprintf( stderr , "ability_type_none at ability \"%s\"\n"
+					,a.name );
+		}
+	}
+}
+
+void print_table_ability(FILE * f) { // TODO
+	fprintf( f ,  "TODO print_table_ability\n" );
+}
+
+
 
 AbilityResult
 Ability::make_roll_result(int const score_add , int const score_multiply) const {
 	RollResult roll_result = RollResult(score_add , score_multiply);
-	AbilityResult ability_result = {
+	AbilityResult ability_result = { // TODO check this, looks weird
 		 roll_result
 		,on_success_counter_type
 	};
@@ -964,12 +982,12 @@ roll_ability_result(
 	/* TODO handling different types of stats for different abilities */
 	int bonus_actor = 0;
 	int bonus_target = 0;
-	int score_multiply = 1;
+	int score_multiply = ptr_ability->rollmod_multiply;
 	switch(ptr_ability->type) {
 		case ability_type_attack:
 			bonus_actor = actor.get_rollmod_to_hit();
 			bonus_target = target.get_rollmod_defense();
-			score_multiply = actor.get_rollmod_damage();
+			score_multiply += actor.get_rollmod_damage();
 			break;
 		case ability_type_magic:
 			bonus_actor = actor.get_rollmod_magic();
@@ -994,6 +1012,7 @@ roll_ability_result(
 void
 perform_example_combat(FILE * f)
 {
+	CHECK_TABLE_ABILITY();
 	struct CombatEntity you;
 	you.stat.dexterity = 3;
 	you.stat.strength = 4;
@@ -1001,9 +1020,9 @@ perform_example_combat(FILE * f)
 	you.stat.hp_current = 16;
 	you.arr_stat[stat_type_hp_max] = 16;
 	struct CombatEntity foe;
-	foe.stat.hp_max = 12;
-	foe.stat.hp_current = 12;
-	foe.arr_stat[stat_type_hp_max] = 4;
+	foe.stat.hp_max = 6;
+	foe.stat.hp_current = 6;
+	foe.arr_stat[stat_type_hp_max] = 6;
 	foe.stat.strength = 4;
 	(*foe.ptr_counter(counter_type_bleed)) = 2;
 	(*foe.ptr_counter(counter_type_weakness)) = 4;
