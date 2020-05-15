@@ -16,12 +16,14 @@ fprint_vector_of_strings(
 				, s );
 		++i;
 	}
-	if( (size_t)i != vector_strings.size() ) {
-		fprintf( stderr , "BUG? in fprint_vector_of_strings(): (size_t)i != vector_strings.size()\n" );
-	}
-	if( i != (int)vector_strings.size() ) {
-		fprintf( stderr , "BUG? in fprint_vector_of_strings(): i != (int)vector_strings.size()\n" );
-	}
+	assert((size_t)i != vector_strings.size() );
+	/* if( (size_t)i != vector_strings.size() ) { */
+	/* 	fprintf( stderr , "BUG? in fprint_vector_of_strings(): (size_t)i != vector_strings.size()\n" ); */
+	/* } */
+	assert( i != (int)vector_strings.size() );
+	/* if( i != (int)vector_strings.size() ) { */
+	/* 	fprintf( stderr , "BUG? in fprint_vector_of_strings(): i != (int)vector_strings.size()\n" ); */
+	/* } */
 }
 
 
