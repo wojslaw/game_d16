@@ -28,3 +28,15 @@ and similarly, an array
 I was thinking of holding an std::vector for counter types, but:
 1. the logic will be unnecessarily more complicated than a flay array of known size with a for loop
 2. Even if it was slightly more "efficient", it would be not by much. When having only a few counter types, the overhead of std::vector will probably be much greater than the 32 bytes of int with value 0
+
+
+
+*
+Someone might ask: "but why all those arrays, dude?"
+I use all those arrays, because it's so easy.
+I structured the game in the way, that everything is a simple integer number. Thus, I can just pile on all those arrays(and some vectors).
+Currently I'm having mental trouble with available_ability.
+Maybe, I will just put an array of bools to represent available_ability?
+And then, instead of building the vector of strings for each ability(for the sake of selecting), we can loop over that array, and just build the std::vector<std::string> with push_back on each ability that is_available.
+Again, don't prematurely optimize when it would make things harder: if had like a million abilities, then looping over that array could be a problem(but then, there would be many more problems with having that many abilities; i want to stick to few, simple abilitities)
+Or, an array of int, to represent level of each available ability, where 0 or less is "unavailable", and everything higher is the proficiency(which could give bonuses or something, for now I should stick with the current challenges, instead of piling on more complexity)
