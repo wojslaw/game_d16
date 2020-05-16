@@ -5,7 +5,7 @@ $(APPNAME): $(SOURCES) $(HEADERS)
 	g++ -o $(APPNAME) -Wall -Wextra $(SOURCES)
 
 nofile: $(SOURCES) $(HEADERS)
-	g++ -o /dev/null -Wall -Wextra $(SOURCES)
+	g++ -o /dev/null -Wall -Wextra -Wfatal-errors $(SOURCES)
 
 
 run: $(APPNAME)

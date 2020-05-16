@@ -18,4 +18,13 @@ in
 	d16:cpp:calc_d16_score
 currently, a multiply of 0 will clearly ensure the success is always 0, but maybe it should default to 1? or, if multiply is less than 1, then it is calculated normally, but success cannot be raised higher than 1?
 
-1. technical: a slightly more robust way of handling randomness. That is: instead of rolling the dice in definition(creating the RollResult), the dicerolling should. This doesn't seem too important yet, since the whole idea is that the d16 will be rolled always. Also, it would be absolutely funny as heck, if one day I/someone could look back at this comment and say "eh, if only on this faithful date of 2020-05-16T01:29:55+0200 , if only back then you already decoupled dicerolling from creating all those ability_result...). :DD
+*
+technical: a slightly more robust way of handling randomness. That is: instead of rolling the dice in definition(creating the RollResult), the dicerolling should. This doesn't seem too important yet, since the whole idea is that the d16 will be rolled always. Also, it would be absolutely funny as heck, if one day I/someone could look back at this comment and say "eh, if only on this faithful date of 2020-05-16T01:29:55+0200 , if only back then you already decoupled dicerolling from creating all those ability_result...). :DD
+
+
+*
+Just thought about an easy way to have multiple counters in ability: AbilityResult will have an array of counter deltas  :DD 
+and similarly, an array
+I was thinking of holding an std::vector for counter types, but:
+1. the logic will be unnecessarily more complicated than a flay array of known size with a for loop
+2. Even if it was slightly more "efficient", it would be not by much. When having only a few counter types, the overhead of std::vector will probably be much greater than the 32 bytes of int with value 0
