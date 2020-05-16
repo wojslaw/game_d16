@@ -579,12 +579,12 @@ enum ability_id {
 
 void 
 Ability::fprint(FILE * f) {
-	fprintf( f , "%s(%d|%d) TH %d MULT %d"
-			,name
+	fprintf( f , "(t%2d|c%2d) TH %3d MULT %3d %s"
 			,type
 			,on_success_counter_type
 			,rollmod_add
 			,rollmod_multiply
+			,name
 		   );
 }
 
@@ -608,7 +608,7 @@ Ability ARRAY_ABILITIES[] = {
 		.on_success_counter_type = counter_type_bleed ,
 		.rollmod_type = rollmod_type_to_hit ,
 		.rollmod_add = -4 ,
-		.rollmod_multiply = 0 ,
+		.rollmod_multiply = -2 ,
 		.range = 1
 	} ,
 	{
@@ -645,14 +645,25 @@ CHECK_TABLE_ABILITY(void) {
 }
 
 void print_table_ability(FILE * f) { // TODO
-	fprintf( f ,  "TODO print_table_ability\n" );
+	size_t i = 0;
+	for( auto &a : ARRAY_ABILITIES ) {
+		fprintf( f
+				, "0x%zx"
+				, i );
+		a.fprint(f);
+		fprintf(f,"\n");
+		++i;
+	}
 }
 
 
 
 AbilityResult
 Ability::make_roll_result(int const score_add , int const score_multiply) const {
-	RollResult roll_result = RollResult(score_add , score_multiply);
+	RollResult roll_result
+		= RollResult(
+				 score_add + rollmod_add
+				,score_multiply + rollmod_multiply);
 	AbilityResult ability_result = { // TODO check this, looks weird
 		 roll_result
 		,on_success_counter_type
@@ -1013,6 +1024,7 @@ void
 perform_example_combat(FILE * f)
 {
 	CHECK_TABLE_ABILITY();
+	print_table_ability(f);
 	struct CombatEntity you;
 	you.stat.dexterity = 3;
 	you.stat.strength = 4;
