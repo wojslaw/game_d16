@@ -644,7 +644,7 @@ CHECK_TABLE_ABILITY(void) {
 	}
 }
 
-void print_table_ability(FILE * f) { // TODO
+void print_table_ability(FILE * f) {
 	size_t i = 0;
 	for( auto &a : ARRAY_ABILITIES ) {
 		fprintf( f
@@ -749,7 +749,7 @@ struct CombatEntity {
 			 - get_counter_value(counter_type_weakness));
 	};
 	int get_rollmod_wisdom(void) const { return stat.wisdom; }; 
-#define get_rollmod_magic get_rollmod_wisdom // TODO separate 
+	int get_rollmod_magic(void) const { return get_rollmod_wisdom(); }; 
 	int get_rollmod_to_hit(void) const  { return get_rollmod_dexterity(); };
 	int get_rollmod_defense(void) const { return get_rollmod_dexterity(); };
 	int get_rollmod_damage(void) const { return get_rollmod_strength(); };
@@ -764,7 +764,7 @@ struct CombatEntity {
 
 	void perform_post_counters_per_round_effects(void);
 
-	void equip(); //todo
+	void equip(); //TODO
 };
 
 
@@ -799,7 +799,7 @@ int
 CombatEntity::get_stat(enum stat_type const st) const {
 	assert( st > stat_type_none );
 	assert( st < STAT_TYPE_COUNT );
-	return arr_stat[st]; // TODO
+	return arr_stat[st];
 }
 
 
@@ -1004,6 +1004,9 @@ roll_ability_result(
 			bonus_actor = actor.get_rollmod_magic();
 			break;
 		default:
+			fprintf( stderr
+					,"roll_ability_result cannot handle ability_type %d"
+					,ptr_ability->type );
 			break;
 	}
 	return ptr_ability->make_roll_result(
