@@ -8,10 +8,17 @@ calc_d16_score(
 		)
 {
 	/* currently, a multiply of 0 will clearly ensure the success is always 0, but maybe it should default to 1? or, if multiply is less than 1, then it is calculated normally, but success cannot be raised higher than 1? */
-	return
-		add > 0
-		? ((DEFAULT_ADDER + add) * multiply)
-		: add;
+	int score = add;
+	if( score > 0 ) {
+		if( multiply > 0 ) {
+			score = ((DEFAULT_ADDER + add) * multiply);
+		} else if( multiply == 0 ) {
+			score = 1; /* this special interaction(if `multiply=0` then `score` cannot be higher than `1`) will need to be documented for user */
+		} else {
+			score = 0;
+		}
+	}
+	return score;
 }
 
 
@@ -49,7 +56,8 @@ RollResult::RollResult(
 	add = _success_add;
 	multiply = _success_multiply;
 	diceroll = _diceroll;
-	success_score = calc_d16_score(_success_add + diceroll , _success_multiply );
+	roll_score = diceroll + add;
+	success_score = calc_d16_score(roll_score , _success_multiply );
 	success_level = calc_d16_success_level_from_score(success_score);
 }
 
@@ -80,13 +88,14 @@ int d16_required_roll_for_success(
 
 void
 RollResult::fprint(FILE * f) const {
-// print_rollresult(*this); // hmm, weird quirk of C++ : you have to dereference here, because `this` is a pointer
-	fprintf( f , "%d (s%2d ; d 0x%x ; a %d ; m %d)"
-			,success_level
-			,success_score
-			,diceroll
+// print_rollresult(*this); // hmm, weird quirk of C++ : you have to dereference here, because `this` is a pointer // what does this comment actually mean??? is it outdated??
+	fprintf( f , "(a%3d, m%3d, d0x%X, rs%2d, ss%d, sl%d)"
 			,add
 			,multiply
+			,diceroll
+			,roll_score
+			,success_score
+			,success_level
 		  );
 }
 

@@ -15,11 +15,12 @@ roll_d16(void);
 
 
 struct RollResult {
-	int success_level;
-	int success_score; // maybe this should be storable as negatives? success_level of 0 should be enough
-	int diceroll;
-	int add;
-	int multiply;
+	int success_level = 0;
+	int success_score = 0; // maybe this should be storable as negatives? success_level of 0 should be enough
+	int roll_score = 0;
+	int diceroll = 0;
+	int add = 0;
+	int multiply = 0;
 	bool is_success() const { return (success_level > 0); }
 	RollResult() {}
 	RollResult(

@@ -76,6 +76,31 @@ STRINGTABLE_WEAPON_TYPE = {{
 }};
 
 
+enum slot_type {
+	slot_type_none ,
+	slot_type_hand ,
+	slot_type_offhand ,
+	slot_type_head ,
+	slot_type_body ,
+	slot_type_legs ,
+	slot_type_ring ,
+	COUNT_SLOT_TYPE ,
+};
+
+
+std::array<const char * , COUNT_SLOT_TYPE>
+STRINGTABLE_SLOT_TYPE = {{
+	[slot_type_none] = "none" ,
+	[slot_type_hand] = "hand" ,
+	[slot_type_offhand] = "offhand" ,
+	[slot_type_head] = "head" ,
+	[slot_type_body] = "body" ,
+	[slot_type_legs] = "legs" ,
+	[slot_type_ring] = "ring" ,
+}};
+
+
+
 enum monster_type {
 	monster_type_none ,
 	monster_type_devil ,
@@ -515,15 +540,20 @@ STRINGTABLE_STATTYPE_NAME = {{
 
 enum rollmod_type {
 	rollmod_type_none ,
+	rollmod_type_vitality ,
 	rollmod_type_attack ,
 	rollmod_type_magic ,
 	rollmod_type_to_hit ,
+	rollmod_type_defense ,
 	rollmod_type_damage ,
 	rollmod_type_strength ,
 	rollmod_type_dexterity ,
 	rollmod_type_wisdom ,
 	ROLLMOD_TYPE_COUNT ,
 };
+int const STRENGTH_MULTIPLIER_VITALITY = 2;
+int const VITALITY_BASE = 4;
+int const VITALITY_MINIMUM = 1;
 
 
 enum ability_type {
@@ -800,26 +830,13 @@ struct CombatEntity {
 		return (
 				get_counter_value(counter_type_damage)
 				>
-				get_stat(stat_type_hp_max)
-		);
+				get_rollmod(rollmod_type_vitality)
+			   );
 	};
 
-	int get_rollmod_strength(void) const {
-		return (stat.strength
-				 - get_counter_value(counter_type_weakness));
-	};
-	int get_rollmod_dexterity(void) const {
-		return (stat.dexterity
-			 - get_counter_value(counter_type_weakness));
-	};
-	int get_rollmod_wisdom(void) const { return stat.wisdom; }; 
-	int get_rollmod_magic(void) const { return get_rollmod_wisdom(); }; 
-	int get_rollmod_to_hit(void) const  { return get_rollmod_dexterity(); };
-	int get_rollmod_defense(void) const { return get_rollmod_dexterity(); };
-	int get_rollmod_damage(void) const { return get_rollmod_strength(); };
 	int get_counter_value(enum counter_type ct) const;
 	int * ptr_counter(enum counter_type ct);
-	int get_rollmod(enum rollmod_type const rt);
+	int get_rollmod(enum rollmod_type const rt) const;
 	int get_stat(enum stat_type const st) const;
 	int get_max_stat(enum stat_type const st);
 
@@ -832,26 +849,45 @@ struct CombatEntity {
 };
 
 
-int CombatEntity::get_rollmod(enum rollmod_type const rt) {
+
+int CombatEntity::get_rollmod(enum rollmod_type const rt) const {
 	 /* TODO make use of this */
 	int rollmod = 0;
 	switch(rt) {
-		case rollmod_type_none:
-			break;
-		case rollmod_type_attack:
-			rollmod = get_rollmod_to_hit();
-			break;
-		case rollmod_type_damage:
-			rollmod = get_rollmod_damage();
-			break;
 		case rollmod_type_strength:
-			rollmod = get_rollmod_strength();
+			rollmod =
+				(get_stat(stat_type_strength)
+				 - get_counter_value(counter_type_weakness));
 			break;
 		case rollmod_type_dexterity:
-			rollmod = get_rollmod_dexterity();
+			rollmod =
+				(get_stat(stat_type_dexterity)
+				 - get_counter_value(counter_type_slowness));
 			break;
 		case rollmod_type_wisdom:
-			rollmod = get_rollmod_wisdom();
+			rollmod = get_stat(stat_type_wisdom);
+			break;
+		case rollmod_type_magic:
+			rollmod = get_rollmod(rollmod_type_wisdom);
+			break;
+		case rollmod_type_attack:
+		case rollmod_type_to_hit:
+			rollmod = get_rollmod(rollmod_type_dexterity);
+			break;
+		case rollmod_type_damage:
+			rollmod = get_rollmod(rollmod_type_strength);
+			break;
+		case rollmod_type_defense:
+			rollmod = get_rollmod(rollmod_type_dexterity);
+			break;
+		case rollmod_type_vitality:
+			rollmod =
+				VITALITY_BASE
+				+ (STRENGTH_MULTIPLIER_VITALITY
+						* get_rollmod(rollmod_type_strength));
+			if( rollmod < VITALITY_MINIMUM ) {
+				rollmod = VITALITY_MINIMUM;
+			}
 			break;
 		default:
 			fprintf( stderr , "get_rollmod:unexpected rollmod_type = %d" , rt );
@@ -880,9 +916,9 @@ RollResult roll_attack(
 		 const CombatEntity & attacker
 		,const CombatEntity & target
 		) {
-	int const rollmod_attack = attacker.get_rollmod_to_hit();
-	int const rollmod_defense = target.get_rollmod_defense();
-	int const rollmod_damage = attacker.get_rollmod_damage();
+	int const rollmod_attack = attacker.get_rollmod(rollmod_type_to_hit);
+	int const rollmod_defense = target.get_rollmod(rollmod_type_defense);
+	int const rollmod_damage = attacker.get_rollmod(rollmod_type_damage);
 	return RollResult(
 			(rollmod_attack - rollmod_defense)
 			,rollmod_damage ) ;
@@ -923,9 +959,9 @@ void
 CombatEntity::fprint(FILE * f) {
 	fprint_hp(f);
 	fprintf( f , "STR %d , DEX %d , WIS %d ;"
-			,stat.strength
-			,stat.dexterity
-			,stat.wisdom
+			,get_stat(stat_type_strength)
+			,get_stat(stat_type_dexterity)
+			,get_stat(stat_type_wisdom)
 			);
 	fprint_nonzero_counters(f);
 }
@@ -965,7 +1001,7 @@ CombatEntity::fprint_all_counters(FILE * f)  {
 void
 CombatEntity::fprint_hp(FILE * f) {
 	fprintf( f , "(VIT: %d)"
-			,get_stat(stat_type_hp_max)
+			,get_rollmod(rollmod_type_vitality)
 			);
 }
 
@@ -1059,15 +1095,15 @@ roll_ability_result(
 	int score_multiply = ptr_ability->rollmod_multiply;
 	switch(ptr_ability->type) {
 		case ability_type_attack:
-			bonus_actor = actor.get_rollmod_to_hit();
-			bonus_target = target.get_rollmod_defense();
-			score_multiply += actor.get_rollmod_damage();
+			bonus_actor = actor.get_rollmod(rollmod_type_to_hit);
+			bonus_target = target.get_rollmod(rollmod_type_defense);
+			score_multiply += actor.get_rollmod(rollmod_type_damage);
 			break;
 		case ability_type_magic:
-			bonus_actor = actor.get_rollmod_magic();
+			bonus_actor = actor.get_rollmod(rollmod_type_magic);
 			break;
 		case ability_type_buff:
-			bonus_actor = actor.get_rollmod_magic();
+			bonus_actor = actor.get_rollmod(rollmod_type_magic);
 			break;
 		default:
 			fprintf( stderr
@@ -1083,12 +1119,49 @@ roll_ability_result(
 
 
 void
+apply_result_in_combat(
+		 CombatEntity * target
+		,const AbilityResult ability_result
+		) {
+	assert( target );
+	target->apply_ability_result( ability_result );
+};
+
+
+CombatEntity *
+get_target_of_ability( /* TODO handle more entities than actor-enemy, but that will come only after I make a robust system for selection */
+		 CombatEntity &actor
+		,CombatEntity &enemy
+		,const Ability * chosen_ability
+		) {
+	assert( chosen_ability );
+	CombatEntity * target;
+	switch(chosen_ability->targeting_type) {
+		case targeting_type_self:
+			target = &actor;
+			break;
+		case targeting_type_enemy:
+			target = &enemy;
+			break;
+		default:
+			fprintf(  stderr
+					,"unexpected targeting_type=%d\n"
+					,chosen_ability->targeting_type );
+	}
+	return target;
+};
+
+
+void
 apply_results_in_combat(
 		 CombatEntity * actor
 		,CombatEntity * enemy
 		,const Ability * chosen_ability
 		,const AbilityResult ability_result
 		) {
+	assert( actor );
+	assert( enemy );
+	assert( chosen_ability );
 	switch(chosen_ability->targeting_type) {
 		case targeting_type_self:
 			actor->apply_ability_result( ability_result );
@@ -1110,25 +1183,17 @@ apply_results_in_combat(
 
 
 
-
 void
 perform_example_combat(FILE * f)
 {
 	CHECK_TABLE_ABILITY();
 	print_table_ability(f);
 	struct CombatEntity you;
-	you.stat.dexterity = 3;
-	you.stat.strength = 4;
-	you.stat.hp_max = 16;
-	you.stat.hp_current = 16;
 	you.arr_stat[stat_type_hp_max] = 16;
+	you.arr_stat[stat_type_strength] = 3;
+	you.arr_stat[stat_type_dexterity] = 4;
 	struct CombatEntity foe;
-	foe.stat.hp_max = 6;
-	foe.stat.hp_current = 6;
 	foe.arr_stat[stat_type_hp_max] = 6;
-	foe.stat.strength = 4;
-	(*foe.ptr_counter(counter_type_bleed)) = 2;
-	(*foe.ptr_counter(counter_type_weakness)) = 4;
 
 	fprintf( f , "you: " );
 	you.fprint(f);
@@ -1136,7 +1201,7 @@ perform_example_combat(FILE * f)
 	fprintf( f , "foe: " );
 	foe.fprint(f);
 	fprintf( f , "\n" );
-	int const ROUND_COUNT = 4;
+	int const ROUND_COUNT = 8;
 
 	int round = 0;
 	for( ; round < ROUND_COUNT ; ++round ) {
@@ -1146,8 +1211,7 @@ perform_example_combat(FILE * f)
 			fprintf( f , "aborting, since you selected %d\n" , selection);
 			goto jump_end;
 		}
-		fprintf( f , "selected %d\n" , selection);
-		fprintf( f, "you hit:" );
+		fprintf( f, "you(%d):" , selection);
 		const auto you_ability = you.ptr_available_ability(selection);
 		const AbilityResult you_ability_result
 			= roll_ability_result(
@@ -1157,7 +1221,7 @@ perform_example_combat(FILE * f)
 		you_ability_result.fprint( f );
 		fprintf( f , "\n" );
 		int const enemy_selection = rand() % 3;
-		fprintf( f, "foe hits with %d" , enemy_selection );
+		fprintf( f, "foe(%d):" , enemy_selection );
 		const auto foe_ability = foe.ptr_available_ability(selection);
 		const AbilityResult foe_ability_result
 			= roll_ability_result(
@@ -1166,15 +1230,19 @@ perform_example_combat(FILE * f)
 					,you );
 		foe_ability_result.fprint( f );
 		fprintf( f , "\n" );
-		apply_results_in_combat(
-				 &you
-				,&foe
-				,you_ability
+		auto you_targeted_entity = get_target_of_ability(
+				 you
+				,foe
+				,you_ability);
+		auto foe_targeted_entity = get_target_of_ability(
+				 foe
+				,you
+				,foe_ability);
+		apply_result_in_combat(
+				 you_targeted_entity
 				,you_ability_result );
-		apply_results_in_combat(
-				 &foe
-				,&you
-				,foe_ability
+		apply_result_in_combat(
+				 foe_targeted_entity
 				,foe_ability_result );
 		if( you.is_dead() ) {
 			fprintf( f , "you died\n" );
