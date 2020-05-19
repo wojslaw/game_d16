@@ -36,6 +36,8 @@ struct RollResult {
 				,_success_multiply ) {}
 	void fprint(FILE * f) const;
 	int get_success_level(void) const ;
+	int get_score_roll(void) const ;
+	int get_score_success(void) const ;
 };
 
 
@@ -65,3 +67,5 @@ d16_required_roll_for_success(
 		int const );
 
 
+void
+devd16_perform_tests(void);

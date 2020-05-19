@@ -104,3 +104,89 @@ int
 RollResult::get_success_level(void) const {
 	return success_level;
 };
+
+
+int
+RollResult::get_score_roll(void) const {
+	return roll_score;
+}
+
+
+int
+RollResult::get_score_success(void) const {
+	return success_score;
+}
+
+
+
+
+struct TestSet {
+	int diceroll;
+	int add;
+	int multiply;
+	int expected_success_level;
+	TestSet(
+			 int const _diceroll
+			,int const _add
+			,int const _multiply
+			,int const _expected_success_level) {
+		diceroll = _diceroll;
+		add = _add;
+		multiply = _multiply;
+		expected_success_level = _expected_success_level;
+	}
+	int fprint(FILE * f) const {
+		return fprintf( f , "[d 0x%x , a %d, m %d, expect %d]"
+				,diceroll
+				,add
+				,multiply
+				,expected_success_level );
+	}
+};
+
+
+
+void devd16_perform_tests(void) {
+	fprintf(stderr , "devd16_perform_tests\n");
+	const TestSet set[] = {
+		TestSet( 0x0 , 0 , 0 , 0) ,
+		TestSet( 0x1 , 0 , 0 , 1) ,
+		TestSet( 0xf , 0 , 0 , 1) ,
+		TestSet( 0x0 , 1 , 1 , 1) ,
+		TestSet( 0xf , 1 , 1 , 2) ,
+		TestSet( 0x1 , 1 , 2 , 1) ,
+		TestSet( 0x7 , 8 , 2 , 2) ,
+		TestSet( 0x0 , 0 , -1 , 0) ,
+		TestSet( 0x0 , 1 , -1 , 0) ,
+	};
+	size_t test_id = 0;
+	int failures = 0;
+	for( auto & s : set ) {
+		auto const rr = RollResult(
+				 s.diceroll
+				,s.add
+				,s.multiply
+				);
+		int const success_level = rr.get_success_level();
+		if( rr.get_success_level() != s.expected_success_level ) {
+			fprintf( stderr, "failed test 0x%zx " , test_id);
+			s.fprint( stderr );
+			fprintf( stderr
+					," got %d (scores: roll=%d , success=%d)\n"
+					,success_level
+					,rr.roll_score
+					,rr.success_score
+					);
+
+			++failures;
+		}
+		++test_id;
+	}
+
+	fprintf( stderr, "done.");
+	if( failures > 0 ) {
+		fprintf( stderr, " failed tests: %d\n" , failures );
+	} else {
+		fprintf( stderr, " all ok");
+	}
+}

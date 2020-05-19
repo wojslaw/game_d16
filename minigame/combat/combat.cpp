@@ -2,54 +2,19 @@
 
 
 
-void
-fprint_vector_of_strings(
-		 FILE * f
-		,std::vector< const char * > &vector_strings
-		)
-{
-	fprintf( f ,  "\n" );
-	int i = 0;
-	for( auto s : vector_strings ) {
-		fprintf( f , "%d %s\n"
-				, i
-				, s );
-		++i;
-	}
-	assert((size_t)i == vector_strings.size() );
-	/* if( (size_t)i != vector_strings.size() ) { */
-	/* 	fprintf( stderr , "BUG? in fprint_vector_of_strings(): (size_t)i != vector_strings.size()\n" ); */
-	/* } */
-	assert( i == (int)vector_strings.size() );
-	/* if( i != (int)vector_strings.size() ) { */
-	/* 	fprintf( stderr , "BUG? in fprint_vector_of_strings(): i != (int)vector_strings.size()\n" ); */
-	/* } */
-}
-
-
-int
-select_fprint_vector_of_strings(
-		 FILE * f
-		,std::vector< const char * > vector_strings
-		)
-{
-	fprint_vector_of_strings(
-			 f
-			,vector_strings
-			);
-	fprintf( f , "input selection:\n" ); // TODO: better system for handling selections
-	int selection = -1;
-	scanf( "%i" , &selection );
-	return selection;
-}
-
-
-
-
-
-
-
-
+enum item_type {
+	item_type_none ,
+	item_type_wearable ,
+	item_type_consumable ,
+	item_type_permanent ,
+	item_type_sword ,
+	item_type_axe ,
+	item_type_polearm ,
+	item_type_club ,
+	item_type_throwable ,
+	item_type_ranged_thrower ,
+	COUNT_ITEM_TYPE ,
+};
 
 
 enum weapon_type {
@@ -60,20 +25,33 @@ enum weapon_type {
 	weapon_type_club ,
 	weapon_type_throwable ,
 	weapon_type_ranged_thrower ,
-	SIZEOF_STRINGTABLE_WEAPON_TYPE ,
+	COUNT_WEAPON_TYPE
 };
 
 
-std::array<const char * , SIZEOF_STRINGTABLE_WEAPON_TYPE>
-STRINGTABLE_WEAPON_TYPE = {{
-	[weapon_type_none] = "[no_weapon_type]" ,
-	[weapon_type_sword] = "sword",
-	[weapon_type_axe] = "axe",
-	[weapon_type_polearm] = "polearm",
-	[weapon_type_club] = "club",
-	[weapon_type_throwable] = "throwable" ,
-	[weapon_type_ranged_thrower] = "ranged_thrower" ,
-}};
+const char *
+STRINGTABLE_ITEM_TYPE[COUNT_ITEM_TYPE] = {
+	[item_type_none]
+		= "item_type_none" ,
+	[item_type_wearable]
+		= "item_type_wearable" ,
+	[item_type_consumable]
+		= "item_type_consumable" ,
+	[item_type_permanent]
+		= "item_type_permanent" ,
+	[item_type_sword]
+		= "item_type_sword" ,
+	[item_type_axe]
+		= "item_type_axe" ,
+	[item_type_polearm]
+		= "item_type_polearm" ,
+	[item_type_club]
+		= "item_type_club" ,
+	[item_type_throwable]
+		= "item_type_throwable" ,
+	[item_type_ranged_thrower]
+		= "item_type_ranged_thrower" ,
+};
 
 
 enum slot_type {
@@ -197,221 +175,6 @@ TABLE_TRAINING_TYPE[] {
 
 
 
-struct WeaponBase {
-	enum weapon_type type = weapon_type_none;
-	bool handedness_1 = true;
-	bool handedness_2 = true;
-	int required_strength = 0;
-	int required_dexterity = 0;
-	int required_wisdom = 0;
-	int to_hit = 0;
-	int twohanded_to_hit = 0;
-	int range = 0;
-	int base_damage = 0;
-	const char * name = NULL;
-	void fprint(FILE * f) const;
-	static
-		const struct WeaponBase *
-		weapon_base_get_pointer_from_id(
-				size_t const id ) ;
-};
-
-
-
-const std::vector< WeaponBase >
-TABLE_WEAPON_BASE = {
-
-	{
-		.type=weapon_type_none,
-		.range=1,
-		.base_damage=1,
-		.name = "None" 
-	},
-
-	{
-		.type=weapon_type_polearm ,
-		.to_hit = -3 ,
-		.range = 2,
-		.base_damage = 2 ,
-		.name = "Training Spear" 
-	},
-
-	{
-		.type=weapon_type_sword   ,
-		.to_hit = -3 ,
-		.range = 1,
-		.base_damage = 2 ,
-		.name = "Training Sword" 
-	},
-
-	{
-		.type=weapon_type_axe     ,
-		.to_hit = -3 ,
-		.range = 1,
-		.base_damage = 2 ,
-		.name = "Training Axe" 
-	},
-
-	{
-		.type=weapon_type_polearm ,
-		.twohanded_to_hit=2 ,
-		.range = 2 ,
-		.base_damage = 6 ,
-		.name = "Spear" 
-	},
-
-	{
-		.type=weapon_type_sword   ,
-		.range = 1 ,
-		.base_damage = 3 ,
-		.name = "Shortsword" 
-	},
-
-	{
-		.type=weapon_type_axe ,
-		.required_strength = 2 ,
-		.to_hit =-4 ,
-		.twohanded_to_hit=3 ,
-		.range = 1,
-		.base_damage = 5 ,
-		.name = "Lumber Axe" 
-	},
-
-	{
-		.type=weapon_type_ranged_thrower ,
-		.handedness_1=false ,
-		.required_strength = 1 ,
-		.to_hit = 0 ,
-		.range = 6,
-		.base_damage = 6 ,
-		.name = "Crossbow" 
-	},
-
-	{
-		.type=weapon_type_ranged_thrower ,
-		.handedness_1=false ,
-		.required_strength = 1 ,
-		.to_hit = -2 ,
-		.range = 5,
-		.base_damage = 6 ,
-		.name = "Short Bow" 
-	},
-	{
-		.type=weapon_type_ranged_thrower ,
-		.handedness_1=false ,
-		.required_strength = 5 ,
-		.to_hit = -2 ,
-		.range = 8,
-		.base_damage = 12 ,
-		.name = "Long Bow" 
-	},
-
-	{
-		.type=weapon_type_throwable ,
-		.handedness_2=false ,
-		.required_strength = 1 ,
-		.to_hit = -2 ,
-		.range = 4,
-		.base_damage = 4 ,
-		.name = "Stone"
-	} ,
-
-};
-
-
-const WeaponBase *
-WeaponBase::weapon_base_get_pointer_from_id(size_t const id)
-{
-	assert( id < TABLE_WEAPON_BASE.size() );
-	return &(TABLE_WEAPON_BASE[id]);
-}
-
-
-struct WeaponEntity;
-typedef struct WeaponEntity * pointer_weapon;
-
-enum weaponentity_stat_type {
-	weaponentity_stat_quality ,
-	weaponentity_stat_durability_max ,
-	weaponentity_stat_durability_current ,
-	WEAPONENTITY_STAT_COUNT ,
-};
-
-
-struct WeaponEntity {
-	size_t weapon_base_id = 0;
-	bool is_breakable = true;
-	int stat[WEAPONENTITY_STAT_COUNT] = {
-		[weaponentity_stat_quality] = 0 ,
-		[weaponentity_stat_durability_max] = 1 ,
-		[weaponentity_stat_durability_current] = 1 ,
-	};
-	void fprint(FILE * f);
-	void fprint_stat(FILE * f);
-};
-
-
-const char * STRINGTABLE_WEAPONENTITY_STAT[] = {
-	[weaponentity_stat_quality] = "quality" ,
-	[weaponentity_stat_durability_max] = "durability_max" ,
-	[weaponentity_stat_durability_current] = "durability_current" ,
-};
-
-
-void
-WeaponEntity::fprint(FILE * f) {
-	fprintf( f , "WeaponEntity:{q %d,d %d/%d,base[0x%lx]:{"
-			,stat[weaponentity_stat_quality]
-			,stat[weaponentity_stat_durability_max]
-			,stat[weaponentity_stat_durability_current]
-			,weapon_base_id
-		   );
-	const struct WeaponBase * ptr_weaponbase = WeaponBase::weapon_base_get_pointer_from_id(weapon_base_id);
-	ptr_weaponbase->fprint(f);
-	fprintf( f , "}}" );
-}
-
-
-
-
-
-void
-display_table_weapon_type(FILE * f)
-{
-	for(int i = 0; i < SIZEOF_STRINGTABLE_WEAPON_TYPE; ++i) {
-		fprintf(f , "%d %s\n" , i , STRINGTABLE_WEAPON_TYPE[i] );
-	}
-}
-
-
-void
-WeaponBase::fprint( FILE * f
-) const {
-	fprintf( f , "{t %d rs %d rd %d rw %d th %d rng %d dmg %d"
-			, type
-			, required_strength
-			, required_dexterity
-			, required_wisdom
-			, to_hit
-			, range
-			, base_damage );
-	if( name ) {
-		fprintf( f , "%s}", name );
-	}
-}
-
-
-void
-display_table_weapon_base(FILE * f)
-{
-	for(size_t i = 0; i < TABLE_WEAPON_BASE.size() ; ++i ) {
-		fprintf(f , "%lu" , i );
-		TABLE_WEAPON_BASE[i].fprint(f);
-		fprintf(f , "\n" );
-	}
-}
-
-
 enum counter_type {
  // I keep wanting to add some harder abstraction for the counters.
  // as in: a separate definition of counter_type
@@ -507,8 +270,6 @@ fprint_counter_full_description(
 
 enum stat_type {
 	stat_type_none ,
-	stat_type_hp_max ,
-	stat_type_hp_current ,
 	stat_type_strength ,
 	stat_type_dexterity ,
 	stat_type_wisdom ,
@@ -519,8 +280,6 @@ enum stat_type {
 std::array<const char * , STAT_TYPE_COUNT>
 STRINGTABLE_STATTYPE_SYMBOL = {{
 	[stat_type_none] = "[[symbol:stat_type_none]]" ,
-	[stat_type_hp_max] = "HPmax" ,
-	[stat_type_hp_current] = "HPcur" ,
 	[stat_type_strength] = "STR" ,
 	[stat_type_dexterity] =  "DEX" ,
 	[stat_type_wisdom] = "WIS" ,
@@ -530,8 +289,6 @@ STRINGTABLE_STATTYPE_SYMBOL = {{
 std::array<const char * , STAT_TYPE_COUNT>
 STRINGTABLE_STATTYPE_NAME = {{
 	[stat_type_none] = "[[name:stat_type_none]]" ,
-	[stat_type_hp_max] = "Hitpoints Max" ,
-	[stat_type_hp_current] = "Hitpoints Current" ,
 	[stat_type_strength] = "Strength" ,
 	[stat_type_dexterity] =  "Dexterity" ,
 	[stat_type_wisdom] = "Wisdom" ,
@@ -554,6 +311,393 @@ enum rollmod_type {
 int const STRENGTH_MULTIPLIER_VITALITY = 2;
 int const VITALITY_BASE = 4;
 int const VITALITY_MINIMUM = 1;
+
+const char * 
+STRINGTABLE_ROLLMOD_NAME[ROLLMOD_TYPE_COUNT] = {
+	[rollmod_type_none]        = "[[rollmod_type_none]]" ,
+	[rollmod_type_vitality]    = "vitality"  ,
+	[rollmod_type_attack]      = "attack"    ,
+	[rollmod_type_magic]       = "magic"     ,
+	[rollmod_type_to_hit]      = "to_hit"    ,
+	[rollmod_type_defense]     = "defense"   ,
+	[rollmod_type_damage]      = "damage"    ,
+	[rollmod_type_strength]    = "strength"  ,
+	[rollmod_type_dexterity]   = "dexterity" ,
+	[rollmod_type_wisdom]      = "wisdom"    ,
+};
+
+
+const char * 
+STRINGTABLE_ROLLMOD_SHORTNAME[ROLLMOD_TYPE_COUNT] = {
+	[rollmod_type_none]        = "[[shortname:rollmod_type_none]]" ,
+	[rollmod_type_vitality]    = "VIT" ,
+	[rollmod_type_attack]      = "ATT" ,
+	[rollmod_type_magic]       = "MAG" ,
+	[rollmod_type_to_hit]      = "HIT" ,
+	[rollmod_type_defense]     = "DEF" ,
+	[rollmod_type_damage]      = "DMG" ,
+	[rollmod_type_strength]    = "STR" ,
+	[rollmod_type_dexterity]   = "DEX" ,
+	[rollmod_type_wisdom]      = "WIS" ,
+};
+
+void
+fprint_rollmod_array(
+		 FILE * f
+		,const int (&arr)[ROLLMOD_TYPE_COUNT]) {
+	size_t i = 0;
+	for( const auto &v : arr ) {
+		if( v != 0 ) {
+			
+		}
+		fprintf( f , "%s %d"
+				, STRINGTABLE_ROLLMOD_SHORTNAME[i]
+				, v);
+		++i;
+	}
+}
+
+
+
+enum skill {
+	skill_none ,
+	skill_alchemistry ,
+	skill_mathemagics ,
+	SKILL_COUNT ,
+};
+
+const char *
+STRINGTABLE_SKILL[SKILL_COUNT] = {
+	[skill_none] = "[[skill_none]]" ,
+	[skill_alchemistry] = "Alchemistry",
+	[skill_mathemagics] = "Mathemagics" ,
+};
+
+
+
+
+
+struct ItemBase {
+	enum item_type type = item_type_none;
+	bool is_2handed = false;
+	bool is_breakable = true;
+	int default_max_durability = 1;
+	int required_stat[STAT_TYPE_COUNT] = { 0 };
+	int range = 0;
+	int rollmod[ROLLMOD_TYPE_COUNT] = { 0 };
+	const char * name = NULL;
+	void fprint(FILE * f) const;
+	static
+		const struct ItemBase *
+		item_base_get_pointer_from_id(
+				size_t const id ) ;
+	int get_rollmod(enum rollmod_type rt) const;
+};
+
+
+int
+ItemBase::get_rollmod(enum rollmod_type rt) const {
+	assert( rt > rollmod_type_none );
+	assert( rt < ROLLMOD_TYPE_COUNT );
+	return rollmod[rt];
+}
+
+
+int const WEAPON_TRAINING_TO_HIT = -3;
+int const WEAPON_TRAINING_DAMAGE =  3;
+
+
+int
+ARRAY_ROLLMOD_WEAPON_TRAINING[ROLLMOD_TYPE_COUNT]  = {
+	[rollmod_type_none     ]  = 0 ,
+	[rollmod_type_vitality ]  = 0 ,
+	[rollmod_type_attack   ]  = 0 ,
+	[rollmod_type_magic    ]  = 0 ,
+	[rollmod_type_to_hit   ]  = WEAPON_TRAINING_TO_HIT ,
+	[rollmod_type_defense  ]  = 0 ,
+	[rollmod_type_damage   ]  = WEAPON_TRAINING_DAMAGE ,
+	[rollmod_type_strength ]  = 0 ,
+	[rollmod_type_dexterity]  = 0 ,
+	[rollmod_type_wisdom   ]  = 0 ,
+} ;
+
+
+
+const  ItemBase
+TABLE_ITEM_BASE[] = {
+
+	{
+		type : item_type_none,
+		range : 1,
+		name  :  "None" 
+	},
+
+	{
+		type : item_type_polearm ,
+		is_2handed : true ,
+		default_max_durability : 6 ,
+		range  :  2,
+		rollmod  : {
+			[rollmod_type_none     ]  = 0 ,
+			[rollmod_type_vitality ]  = 0 ,
+			[rollmod_type_attack   ]  = 0 ,
+			[rollmod_type_magic    ]  = 0 ,
+			[rollmod_type_to_hit   ]  = WEAPON_TRAINING_TO_HIT ,
+			[rollmod_type_defense  ]  = 0 ,
+			[rollmod_type_damage   ]  = WEAPON_TRAINING_DAMAGE ,
+			[rollmod_type_strength ]  = 0 ,
+			[rollmod_type_dexterity]  = 0 ,
+			[rollmod_type_wisdom   ]  = 0 ,
+		} ,
+		name  :  "Training Spear" ,
+	},
+
+	{
+		type : item_type_sword   ,
+		default_max_durability : 6 ,
+		range  :  1,
+		rollmod  : {
+			[rollmod_type_none     ]  = 0 ,
+			[rollmod_type_vitality ]  = 0 ,
+			[rollmod_type_attack   ]  = 0 ,
+			[rollmod_type_magic    ]  = 0 ,
+			[rollmod_type_to_hit   ]  = WEAPON_TRAINING_TO_HIT ,
+			[rollmod_type_defense  ]  = 0 ,
+			[rollmod_type_damage   ]  = WEAPON_TRAINING_DAMAGE ,
+			[rollmod_type_strength ]  = 0 ,
+			[rollmod_type_dexterity]  = 0 ,
+			[rollmod_type_wisdom   ]  = 0 ,
+		} ,
+		name  :  "Training Sword" ,
+	},
+	{
+		type : item_type_axe     ,
+		is_2handed : true ,
+		default_max_durability : 8 ,
+		range  :  1,
+		rollmod  : {
+			[rollmod_type_none     ]  = 0 ,
+			[rollmod_type_vitality ]  = 0 ,
+			[rollmod_type_attack   ]  = 0 ,
+			[rollmod_type_magic    ]  = 0 ,
+			[rollmod_type_to_hit   ]  = WEAPON_TRAINING_TO_HIT ,
+			[rollmod_type_defense  ]  = 0 ,
+			[rollmod_type_damage   ]  = WEAPON_TRAINING_DAMAGE ,
+			[rollmod_type_strength ]  = 0 ,
+			[rollmod_type_dexterity]  = 0 ,
+			[rollmod_type_wisdom   ]  = 0 ,
+		} ,
+		name  :  "Training Axe" 
+	},
+
+	{
+		type : item_type_polearm ,
+		is_2handed : true ,
+		default_max_durability : 8 ,
+		range  :  2 ,
+		rollmod  : {
+			[rollmod_type_none     ]  = 0 ,
+			[rollmod_type_vitality ]  = 0 ,
+			[rollmod_type_attack   ]  = 0 ,
+			[rollmod_type_magic    ]  = 0 ,
+			[rollmod_type_to_hit   ]  = 0 ,
+			[rollmod_type_defense  ]  = 0 ,
+			[rollmod_type_damage   ]  =  6 ,
+			[rollmod_type_strength ]  = 0 ,
+			[rollmod_type_dexterity]  = 0 ,
+			[rollmod_type_wisdom   ]  = 0 ,
+		} ,
+		name  :  "Spear" 
+	},
+
+	{
+		type : item_type_sword   ,
+		default_max_durability : 12 ,
+		range  :  1 ,
+		rollmod  : {
+			[rollmod_type_none     ]  = 0 ,
+			[rollmod_type_vitality ]  = 0 ,
+			[rollmod_type_attack   ]  = 0 ,
+			[rollmod_type_magic    ]  = 0 ,
+			[rollmod_type_to_hit   ]  = 0 ,
+			[rollmod_type_defense  ]  = 0 ,
+			[rollmod_type_damage   ]  =  4 ,
+			[rollmod_type_strength ]  = 0 ,
+			[rollmod_type_dexterity]  = 0 ,
+			[rollmod_type_wisdom   ]  = 0 ,
+		} ,
+		name  :  "Shortsword" 
+	},
+
+/* 	{ */
+/* 		type : item_type_axe , */
+/* 		//required_strength  :  2 , */
+/* 		to_hit  : -4 , */
+/* 		/1* rollmod  :  { *1/ */
+/* 		/1* 	[rollmod_type_to_hit] = -4 , *1/ */
+/* 		/1* 	[rollmod_type_damage] =  5 , *1/ */
+/* 		/1* }, *1/ */
+/* 		name  :  "Lumber Axe" */ 
+/* 	}, */
+
+/* 	{ */
+/* 		type : item_type_ranged_thrower , */
+/*		is_2handed : true , */
+/* 		to_hit  :  0 , */
+/* 		/1* rollmod  :  { *1/ */
+/* 		/1* 	[rollmod_type_damage] =  6 , *1/ */
+/* 		/1* }, *1/ */
+/* 		name  :  "Crossbow" */ 
+/* 	}, */
+
+/* 	{ */
+/* 		type : item_type_ranged_thrower , */
+/*		is_2handed : true , */
+/* 		range  :  5, */
+/* 		/1* rollmod  :  { *1/ */
+/* 		/1* 	[rollmod_type_damage] = -2 , *1/ */
+/* 		/1* 	[rollmod_type_damage] =  6 , *1/ */
+/* 		/1* }, *1/ */
+/* 		name  :  "Short Bow" */ 
+/* 	}, */
+/* 	{ */
+/* 		type : item_type_ranged_thrower , */
+/*		is_2handed : true , */
+/* 		range  :  8, */
+/* 		//rollmod  :  { */
+/* 		//	[rollmod_type_damage] = -2 , */
+/* 		//	[rollmod_type_damage] =  8 , */
+/* 		//}, */
+/* 		name  :  "Long Bow" */ 
+/* 	}, */
+
+/* 	{ */
+/* 		type : item_type_throwable , */
+/*		is_2handed : true , */
+/* 		range  :  4, */
+/* 		//rollmod  :  { */
+/* 		//	[rollmod_type_to_hit] = -2 , */
+/* 		//	[rollmod_type_damage] =  8 , */
+/* 		//}, */
+/* 		name  :  "ThrowableStone" */
+/* 	} , */
+/* }; */
+	};
+
+
+int const ITEM_BASE_COUNT = sizeof(TABLE_ITEM_BASE) / sizeof(TABLE_ITEM_BASE[0]);
+
+const ItemBase *
+ItemBase::item_base_get_pointer_from_id(size_t const id)
+{
+	assert( id < ITEM_BASE_COUNT );
+	return &(TABLE_ITEM_BASE[id]);
+}
+
+
+struct ItemEntity;
+typedef struct ItemEntity * pointer_weapon;
+
+enum itementity_stat_type {
+	itementity_stat_quality ,
+	itementity_stat_durability_max ,
+	itementity_stat_durability_current ,
+	ITEMENTITY_STAT_COUNT ,
+};
+
+
+
+const char * STRINGTABLE_itementity_STAT[ITEMENTITY_STAT_COUNT] = {
+	[itementity_stat_quality] = "quality" ,
+	[itementity_stat_durability_max] = "durability_max" ,
+	[itementity_stat_durability_current] = "durability_current" ,
+};
+
+
+
+
+
+
+void
+display_table_item_type(FILE * f)
+{
+	for(int i = 0; i < COUNT_ITEM_TYPE; ++i) {
+		fprintf(f , "%d %s\n" , i , STRINGTABLE_ITEM_TYPE[i] );
+	}
+}
+
+
+void
+ItemBase::fprint( FILE * f
+) const {
+	fprintf( f , "{t %d rs %d rd %d rw %d"
+			, type
+			, required_stat[stat_type_strength]
+			, required_stat[stat_type_dexterity]
+			, required_stat[stat_type_wisdom] );
+	/* weapon */
+	fprintf( f , "rng %d dmg %d th %d "
+			, range
+			, rollmod[rollmod_type_damage]
+			, rollmod[rollmod_type_to_hit] );
+	if( name ) {
+		fprintf( f , "%s}", name );
+	}
+}
+
+
+void
+display_table_item_base(FILE * f)
+{
+	for(size_t i = 0; i < ITEM_BASE_COUNT ; ++i ) {
+		fprintf(f , "%lu" , i );
+		TABLE_ITEM_BASE[i].fprint(f);
+		fprintf(f , "\n" );
+	}
+}
+
+
+
+
+
+struct ItemEntity {
+	size_t item_base_id = 0;
+	bool is_breakable = true;
+	int stat[ITEMENTITY_STAT_COUNT] = {
+		[itementity_stat_quality] = 0 ,
+		[itementity_stat_durability_max] = 1 ,
+		[itementity_stat_durability_current] = 1 ,
+	};
+	int get_rollmod(enum rollmod_type const rt);
+	void fprint(FILE * f);
+	void fprint_stat(FILE * f);
+};
+
+
+void
+ItemEntity::fprint(FILE * f) {
+	fprintf( f , "ItemEntity:{q %d,d %d/%d,base[0x%lx]:{"
+			,stat[itementity_stat_quality]
+			,stat[itementity_stat_durability_max]
+			,stat[itementity_stat_durability_current]
+			,item_base_id
+		   );
+	const struct ItemBase * ptr_weaponbase = ItemBase::item_base_get_pointer_from_id(item_base_id);
+	ptr_weaponbase->fprint(f);
+	fprintf( f , "}}" );
+}
+
+
+int
+ItemEntity::get_rollmod(enum rollmod_type const rt) {
+	if( stat[itementity_stat_durability_current] <= 0 ) {
+		return 0;
+	}
+	int const rollmod = TABLE_ITEM_BASE[item_base_id].get_rollmod(rt);
+	return (rollmod + stat[itementity_stat_quality]);
+}
+
+
 
 
 enum ability_type {
@@ -787,27 +931,32 @@ vector_ability_pointer_get_vector_of_strings(
 
 
 
+struct EffectEntity {
+	const char * name = "[[effectentity:noname]]";
+	int duration = 1;
+	int rollmod[ROLLMOD_TYPE_COUNT] = { 0 };
+	void fprint(FILE * f) const ;
+};
+
+void
+EffectEntity:: fprint(FILE * f) const {
+	fprintf( f , "{effect '%s' , duration %d ,  " , name , duration);
+	fprint_rollmod_array( f , rollmod );
+	fprintf( f , "}");
+}
+
+
+
 struct CombatEntity {
-	struct { /* TODO swap from this, to the arrays */
-		int hp_max = 1;
-		int hp_current = 1;
-		int strength = 1;
-		int dexterity = 1;
-		int wisdom = 1;
-	} stat;
 	std::array< int , COUNTER_TYPE_COUNT > counter_array = {0};
 	std::array< int , STAT_TYPE_COUNT > max_stat = {{
 		[stat_type_none] = 0 ,
-		[stat_type_hp_max] = 1 ,
-		[stat_type_hp_current] = 1 ,
 		[stat_type_strength] = 1 ,
 		[stat_type_dexterity] = 1 ,
 		[stat_type_wisdom] = 1 ,
 	}};
 	std::array< int , STAT_TYPE_COUNT > arr_stat = {{
 		[stat_type_none] = 0 ,
-		[stat_type_hp_max] = 1 ,
-		[stat_type_hp_current] = 1 ,
 		[stat_type_strength] = 1 ,
 		[stat_type_dexterity] = 1 ,
 		[stat_type_wisdom] = 1 ,
@@ -822,6 +971,7 @@ struct CombatEntity {
 
 	//methods
 	void fprint(FILE * f);
+	void fprint_long(FILE * f);
 	void fprint_hp(FILE * f);
 	void fprint_all_counters(FILE * f);
 	void fprint_nonzero_counters(FILE * f);
@@ -833,12 +983,15 @@ struct CombatEntity {
 				get_rollmod(rollmod_type_vitality)
 			   );
 	};
+	bool is_alive() const {
+		return !is_dead();
+	};
 
 	int get_counter_value(enum counter_type ct) const;
 	int * ptr_counter(enum counter_type ct);
 	int get_rollmod(enum rollmod_type const rt) const;
 	int get_stat(enum stat_type const st) const;
-	int get_max_stat(enum stat_type const st);
+	int get_max_stat(enum stat_type const st) const;
 
 	void receive_damage(int damage);
 	void apply_ability_result( const AbilityResult &ability_result );
@@ -905,7 +1058,7 @@ CombatEntity::get_stat(enum stat_type const st) const {
 
 
 int
-CombatEntity::get_max_stat(enum stat_type const st) {
+CombatEntity::get_max_stat(enum stat_type const st) const {
 	assert( st > stat_type_none );
 	assert( st < STAT_TYPE_COUNT );
 	return max_stat[st];
@@ -1010,7 +1163,6 @@ void CombatEntity::receive_damage(int damage) {
 	if( damage < 0 ) {
 		damage = 0;
 	}
-	stat.hp_current -= damage;
 	(*ptr_counter(counter_type_damage)) += damage;
 }
 
@@ -1189,11 +1341,9 @@ perform_example_combat(FILE * f)
 	CHECK_TABLE_ABILITY();
 	print_table_ability(f);
 	struct CombatEntity you;
-	you.arr_stat[stat_type_hp_max] = 16;
 	you.arr_stat[stat_type_strength] = 3;
 	you.arr_stat[stat_type_dexterity] = 4;
 	struct CombatEntity foe;
-	foe.arr_stat[stat_type_hp_max] = 6;
 
 	fprintf( f , "you: " );
 	you.fprint(f);

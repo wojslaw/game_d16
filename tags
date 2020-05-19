@@ -1,0 +1,56 @@
+$(APPNAME	makefile	/^$(APPNAME): $(SOURCES) $(HEADERS)$/
+.phony	makefile	/^.phony: nofile$/
+APPNAME	makefile	/^APPNAME=game_d16$/
+DEFAULT_ADDER	d16.h	8
+DICESIDES	d16.h	7
+HEADERS	makefile	/^HEADERS=d16.h  minigame\/crafting\/crafting.h  minig/
+InterpreterResult	interpreter.h	14
+Mmain.cpp	main.cpp	/^int main(int argc, char * argv[]) {$/
+RollResult	d16.cpp	/^RollResult::RollResult($/
+RollResult	d16.h	17
+RollResult	d16.h	/^	RollResult() {}$/
+RollResult	d16.h	/^	RollResult($/
+RollResult	d16.h	/^	RollResult($/
+SOURCES	makefile	/^SOURCES=main.cpp d16.cpp  minigame\/crafting\/crafti/
+TestSet	d16.cpp	123
+TestSet	d16.cpp	/^	TestSet($/
+add	d16.cpp	125
+add	d16.h	22
+calc_d16_score	d16.cpp	/^calc_d16_score($/
+calc_d16_success_level_from_score	d16.cpp	/^int calc_d16_success_level_from_score($/
+d16_required_roll_for_success	d16.cpp	/^int d16_required_roll_for_success($/
+devd16_perform_tests	d16.cpp	/^void devd16_perform_tests(void) {$/
+diceroll	d16.cpp	124
+diceroll	d16.h	21
+display_debugish_thing	main.cpp	/^display_debugish_thing(void) {$/
+display_list_of_all_tries	main.cpp	/^display_list_of_all_tries($/
+expected_success_level	d16.cpp	127
+fprint	d16.cpp	/^RollResult::fprint(FILE * f) const {$/
+fprint	d16.cpp	/^	int fprint(FILE * f) const {$/
+fprint	d16.h	/^	void fprint(FILE * f) const;$/
+get_score_roll	d16.cpp	/^RollResult::get_score_roll(void) const {$/
+get_score_success	d16.cpp	/^RollResult::get_score_success(void) const {$/
+get_success_level	d16.cpp	/^RollResult::get_success_level(void) const {$/
+integer	interpreter.h	17
+interpret_line_stdin	interpreter.h	/^interpret_line_stdin(void) {$/
+interpreter_result_type	interpreter.h	8
+interpreter_result_type_integer	interpreter.h	10
+interpreter_result_type_none	interpreter.h	9
+interpreter_result_type_string	interpreter.h	11
+is_success	d16.h	/^	bool is_success() const { return (success_level >/
+minigame_type	main.cpp	55
+minigame_type_combat	main.cpp	57
+minigame_type_crafting_economy	main.cpp	56
+multiply	d16.cpp	126
+multiply	d16.h	23
+print_rollresult	d16.cpp	/^print_rollresult($/
+roll_d16	d16.cpp	/^roll_d16(void)$/
+roll_score	d16.h	20
+run	makefile	/^run: $(APPNAME)$/
+string	interpreter.h	16
+success_level	d16.h	18
+success_level_multiplier	goals.txt	/^  2. success_level_multiplier( this will be multip/
+success_score	d16.h	19
+tags	makefile	/^tags: $(SOURCES) $(HEADERS)$/
+testbuild	makefile	/^testbuild:  tags $(SOURCES) $(HEADERS)$/
+type	interpreter.h	15

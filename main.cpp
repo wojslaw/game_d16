@@ -59,13 +59,13 @@ int main(int argc, char * argv[]) {
 	enum minigame_type minigame_type = minigame_type_combat;
 
 	int opt;
-	while ((opt = getopt(argc, argv, "DBTt:k:p:M:A:")) != -1) {
+	while ((opt = getopt(argc, argv, "fDBTt:k:p:M:A:")) != -1) {
 		switch (opt) {
 			case 'T':
-				display_table_weapon_type(stderr);
+				display_table_item_type(stderr);
 				break;
 			case 'B':
-				display_table_weapon_base(stderr);
+				display_table_item_base(stderr);
 				break;
 			case 't':
 				minigame.level_stat = atoi(optarg);
@@ -84,6 +84,10 @@ int main(int argc, char * argv[]) {
 				break;
 			case 'D':
 				flag_display_list_of_all_tries = true;
+				break;
+			case 'f':
+				devd16_perform_tests();
+				exit(EXIT_SUCCESS);
 				break;
 			default: /* '?' */
 				fprintf(stderr, "Usage: %s [-t stat] [-k skill] [-p progres]\n",
