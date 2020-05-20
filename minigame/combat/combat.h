@@ -6,6 +6,8 @@
 
 #include "../interface.hpp"
 #include "../../d16.h"
+#include "rollmod.hpp"
+#include "stattype.hpp"
 
 
 

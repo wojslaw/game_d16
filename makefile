@@ -1,6 +1,21 @@
 APPNAME=game_d16
-SOURCES=main.cpp d16.cpp  minigame/crafting/crafting.cpp   minigame/combat/combat.cpp interpreter.cpp minigame/interface.cpp
-HEADERS=d16.h  minigame/crafting/crafting.h  minigame/combat/combat.h interpreter.h minigame/interface.hpp
+SOURCES=\
+		main.cpp \
+		d16.cpp \
+		minigame/crafting/crafting.cpp \
+		minigame/combat/combat.cpp \
+		interpreter.cpp \
+		minigame/interface.cpp \
+		minigame/combat/rollmod.cpp \
+		minigame/combat/stattype.cpp
+HEADERS= \
+		 d16.h \
+		 interpreter.h \
+		 minigame/interface.hpp \
+		 minigame/crafting/crafting.h \
+		 minigame/combat/combat.h \
+		 minigame/combat/rollmod.hpp \
+		 minigame/combat/stattype.hpp
 $(APPNAME): $(SOURCES) $(HEADERS)
 	g++ -o $(APPNAME) -Wall -Wextra $(SOURCES)
 
