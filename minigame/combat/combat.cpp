@@ -87,7 +87,7 @@ enum monster_type {
 	monster_type_mootant ,
 	monster_type_undead ,
 	monster_type_vermin ,
-	SIZEOF_TABLE_MONSTER_TYPE ,
+	MONSTER_TYPE_COUNT ,
 };
 
 struct MonsterType {
@@ -110,7 +110,7 @@ struct MonsterType {
 // but still, it sounds like a mildly interesting idea, to think of it kinda like species
 // There could also be something kinda like Diablo, in that there are so-called difficulty levels, which just mean the monsters get higher stats there.
 
-std::array<const MonsterType , SIZEOF_TABLE_MONSTER_TYPE>
+std::array<const MonsterType , MONSTER_TYPE_COUNT>
 TABLE_MONSTER_TYPE = {{
 	[monster_type_none] = {
 		.description = "None"
@@ -867,7 +867,7 @@ Ability ARRAY_ABILITIES[] = {
 	} ,
 };
 
-const size_t SIZEOF_TABLE_ABILITY = sizeof(ARRAY_ABILITIES) / sizeof(ARRAY_ABILITIES[0]);
+const size_t ABILITIES_COUNT = sizeof(ARRAY_ABILITIES) / sizeof(ARRAY_ABILITIES[0]);
 
 
 void

@@ -1,56 +1,286 @@
-$(APPNAME	makefile	/^$(APPNAME): $(SOURCES) $(HEADERS)$/
-.phony	makefile	/^.phony: nofile$/
-APPNAME	makefile	/^APPNAME=game_d16$/
-DEFAULT_ADDER	d16.h	8
-DICESIDES	d16.h	7
-HEADERS	makefile	/^HEADERS=d16.h  minigame\/crafting\/crafting.h  minig/
-InterpreterResult	interpreter.h	14
-Mmain.cpp	main.cpp	/^int main(int argc, char * argv[]) {$/
-RollResult	d16.cpp	/^RollResult::RollResult($/
-RollResult	d16.h	17
-RollResult	d16.h	/^	RollResult() {}$/
-RollResult	d16.h	/^	RollResult($/
-RollResult	d16.h	/^	RollResult($/
-SOURCES	makefile	/^SOURCES=main.cpp d16.cpp  minigame\/crafting\/crafti/
-TestSet	d16.cpp	123
-TestSet	d16.cpp	/^	TestSet($/
-add	d16.cpp	125
-add	d16.h	22
-calc_d16_score	d16.cpp	/^calc_d16_score($/
-calc_d16_success_level_from_score	d16.cpp	/^int calc_d16_success_level_from_score($/
-d16_required_roll_for_success	d16.cpp	/^int d16_required_roll_for_success($/
-devd16_perform_tests	d16.cpp	/^void devd16_perform_tests(void) {$/
-diceroll	d16.cpp	124
-diceroll	d16.h	21
-display_debugish_thing	main.cpp	/^display_debugish_thing(void) {$/
-display_list_of_all_tries	main.cpp	/^display_list_of_all_tries($/
-expected_success_level	d16.cpp	127
-fprint	d16.cpp	/^RollResult::fprint(FILE * f) const {$/
-fprint	d16.cpp	/^	int fprint(FILE * f) const {$/
-fprint	d16.h	/^	void fprint(FILE * f) const;$/
-get_score_roll	d16.cpp	/^RollResult::get_score_roll(void) const {$/
-get_score_success	d16.cpp	/^RollResult::get_score_success(void) const {$/
-get_success_level	d16.cpp	/^RollResult::get_success_level(void) const {$/
-integer	interpreter.h	17
-interpret_line_stdin	interpreter.h	/^interpret_line_stdin(void) {$/
-interpreter_result_type	interpreter.h	8
-interpreter_result_type_integer	interpreter.h	10
-interpreter_result_type_none	interpreter.h	9
-interpreter_result_type_string	interpreter.h	11
-is_success	d16.h	/^	bool is_success() const { return (success_level >/
-minigame_type	main.cpp	55
-minigame_type_combat	main.cpp	57
-minigame_type_crafting_economy	main.cpp	56
-multiply	d16.cpp	126
-multiply	d16.h	23
-print_rollresult	d16.cpp	/^print_rollresult($/
-roll_d16	d16.cpp	/^roll_d16(void)$/
-roll_score	d16.h	20
-run	makefile	/^run: $(APPNAME)$/
-string	interpreter.h	16
-success_level	d16.h	18
-success_level_multiplier	goals.txt	/^  2. success_level_multiplier( this will be multip/
-success_score	d16.h	19
-tags	makefile	/^tags: $(SOURCES) $(HEADERS)$/
-testbuild	makefile	/^testbuild:  tags $(SOURCES) $(HEADERS)$/
-type	interpreter.h	15
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ABILITIES_COUNT	minigame/combat/combat.cpp	/^const size_t ABILITIES_COUNT = sizeof(ARRAY_ABILITIES) \/ sizeof(ARRAY_ABILITIES[0]);$/;"	v
+ABILITY_COUNT	minigame/combat/combat.cpp	/^	ABILITY_COUNT ,$/;"	e	enum:ability_id	file:
+ABILITY_TYPE_COUNT	minigame/combat/combat.cpp	/^	ABILITY_TYPE_COUNT ,$/;"	e	enum:ability_type	file:
+APPNAME	makefile	/^APPNAME=game_d16$/;"	m
+ARRAY_ABILITIES	minigame/combat/combat.cpp	/^Ability ARRAY_ABILITIES[] = {$/;"	v
+ARRAY_ROLLMOD_WEAPON_TRAINING	minigame/combat/combat.cpp	/^ARRAY_ROLLMOD_WEAPON_TRAINING[ROLLMOD_TYPE_COUNT]  = {$/;"	v
+Ability	minigame/combat/combat.cpp	/^struct Ability {$/;"	s	file:
+AbilityResult	minigame/combat/combat.cpp	/^	AbilityResult($/;"	f	struct:AbilityResult
+AbilityResult	minigame/combat/combat.cpp	/^struct AbilityResult {$/;"	s	file:
+Action	minigame/crafting/crafting.h	/^struct Action {$/;"	s
+CHECK_TABLE_ABILITY	minigame/combat/combat.cpp	/^CHECK_TABLE_ABILITY(void) {$/;"	f
+COUNTER_TYPE_COUNT	minigame/combat/combat.cpp	/^	COUNTER_TYPE_COUNT ,$/;"	e	enum:counter_type	file:
+COUNT_ITEM_TYPE	minigame/combat/combat.cpp	/^	COUNT_ITEM_TYPE ,$/;"	e	enum:item_type	file:
+COUNT_SLOT_TYPE	minigame/combat/combat.cpp	/^	COUNT_SLOT_TYPE ,$/;"	e	enum:slot_type	file:
+COUNT_WEAPON_TYPE	minigame/combat/combat.cpp	/^	COUNT_WEAPON_TYPE$/;"	e	enum:weapon_type	file:
+Character	minigame/crafting/crafting.h	/^struct Character {$/;"	s
+CombatEntity	minigame/combat/combat.cpp	/^struct CombatEntity {$/;"	s	file:
+DEFAULT_ADDER	d16.h	/^int const DEFAULT_ADDER = 1; \/\/ the plan was to add 1, if the score succeeds, so that the lowest successful ratio is 2\/16, instead of 1\/16 \/\/ okay, it works now :]$/;"	v
+DICESIDES	d16.h	/^int const DICESIDES = 0x10; \/\/don't change this - many calculations depend on it$/;"	v
+EffectEntity	minigame/combat/combat.cpp	/^struct EffectEntity {$/;"	s	file:
+HEADERS	makefile	/^HEADERS=d16.h  minigame\/crafting\/crafting.h  minigame\/combat\/combat.h interpreter.h minigame\/interface.hpp$/;"	m
+ITEMENTITY_STAT_COUNT	minigame/combat/combat.cpp	/^	ITEMENTITY_STAT_COUNT ,$/;"	e	enum:itementity_stat_type	file:
+ITEM_BASE_COUNT	minigame/combat/combat.cpp	/^int const ITEM_BASE_COUNT = sizeof(TABLE_ITEM_BASE) \/ sizeof(TABLE_ITEM_BASE[0]);$/;"	v
+InterpreterResult	interpreter.h	/^struct InterpreterResult {$/;"	s
+ItemBase	minigame/combat/combat.cpp	/^struct ItemBase {$/;"	s	file:
+ItemEntity	minigame/combat/combat.cpp	/^struct ItemEntity {$/;"	s	file:
+MONSTER_TYPE_COUNT	minigame/combat/combat.cpp	/^	MONSTER_TYPE_COUNT ,$/;"	e	enum:monster_type	file:
+MonsterType	minigame/combat/combat.cpp	/^struct MonsterType {$/;"	s	file:
+ROLLMOD_TYPE_COUNT	minigame/combat/combat.cpp	/^	ROLLMOD_TYPE_COUNT ,$/;"	e	enum:rollmod_type	file:
+RollResult	d16.cpp	/^RollResult::RollResult($/;"	f	class:RollResult
+RollResult	d16.h	/^	RollResult($/;"	f	struct:RollResult
+RollResult	d16.h	/^	RollResult() {}$/;"	f	struct:RollResult
+RollResult	d16.h	/^struct RollResult {$/;"	s
+SIZEOF_TABLE_ACTION	minigame/crafting/crafting.cpp	/^size_t const SIZEOF_TABLE_ACTION = sizeof(TABLE_ACTION)\/sizeof(TABLE_ACTION[0]);$/;"	v
+SKILL_COUNT	minigame/combat/combat.cpp	/^	SKILL_COUNT ,$/;"	e	enum:skill	file:
+SOURCES	makefile	/^SOURCES=main.cpp d16.cpp  minigame\/crafting\/crafting.cpp   minigame\/combat\/combat.cpp interpreter.cpp minigame\/interface.cpp$/;"	m
+STAT_TYPE_COUNT	minigame/combat/combat.cpp	/^	STAT_TYPE_COUNT ,$/;"	e	enum:stat_type	file:
+STRENGTH_MULTIPLIER_VITALITY	minigame/combat/combat.cpp	/^int const STRENGTH_MULTIPLIER_VITALITY = 2;$/;"	v
+STRINGTABLE_ABILITY_TYPE	minigame/combat/combat.cpp	/^STRINGTABLE_ABILITY_TYPE[ABILITY_TYPE_COUNT] = {$/;"	v
+STRINGTABLE_COUNTERTYPE_NAME_NEGATIVE	minigame/combat/combat.cpp	/^STRINGTABLE_COUNTERTYPE_NAME_NEGATIVE = {{$/;"	v
+STRINGTABLE_COUNTERTYPE_SYMBOL	minigame/combat/combat.cpp	/^STRINGTABLE_COUNTERTYPE_SYMBOL = {{$/;"	v
+STRINGTABLE_IS_ADD_COUNTER	minigame/combat/combat.cpp	/^STRINGTABLE_IS_ADD_COUNTER[ABILITY_TYPE_COUNT] = {$/;"	v
+STRINGTABLE_ITEM_TYPE	minigame/combat/combat.cpp	/^STRINGTABLE_ITEM_TYPE[COUNT_ITEM_TYPE] = {$/;"	v
+STRINGTABLE_ROLLMOD_NAME	minigame/combat/combat.cpp	/^STRINGTABLE_ROLLMOD_NAME[ROLLMOD_TYPE_COUNT] = {$/;"	v
+STRINGTABLE_ROLLMOD_SHORTNAME	minigame/combat/combat.cpp	/^STRINGTABLE_ROLLMOD_SHORTNAME[ROLLMOD_TYPE_COUNT] = {$/;"	v
+STRINGTABLE_SKILL	minigame/combat/combat.cpp	/^STRINGTABLE_SKILL[SKILL_COUNT] = {$/;"	v
+STRINGTABLE_SLOT_TYPE	minigame/combat/combat.cpp	/^STRINGTABLE_SLOT_TYPE = {{$/;"	v
+STRINGTABLE_STATTYPE_NAME	minigame/combat/combat.cpp	/^STRINGTABLE_STATTYPE_NAME = {{$/;"	v
+STRINGTABLE_STATTYPE_SYMBOL	minigame/combat/combat.cpp	/^STRINGTABLE_STATTYPE_SYMBOL = {{$/;"	v
+STRINGTABLE_TARGETING_TYPE	minigame/combat/combat.cpp	/^STRINGTABLE_TARGETING_TYPE[TARGETING_TYPE_COUNT] = {$/;"	v
+STRINGTABLE_itementity_STAT	minigame/combat/combat.cpp	/^const char * STRINGTABLE_itementity_STAT[ITEMENTITY_STAT_COUNT] = {$/;"	v
+STRING_HELP_TRAINING	minigame/combat/combat.cpp	/^const char * STRING_HELP_TRAINING = "You advance with each failure of dice. Thus, if you want to gain higher skill levels, you have to pick more difficult training regimens.\\n";$/;"	v
+TABLE_ACTION	minigame/crafting/crafting.cpp	/^TABLE_ACTION[] = {$/;"	v
+TABLE_ITEM_BASE	minigame/combat/combat.cpp	/^TABLE_ITEM_BASE[] = {$/;"	v
+TABLE_MONSTER_TYPE	minigame/combat/combat.cpp	/^TABLE_MONSTER_TYPE = {{$/;"	v
+TARGETING_TYPE_COUNT	minigame/combat/combat.cpp	/^	TARGETING_TYPE_COUNT ,$/;"	e	enum:targeting_type	file:
+TestSet	d16.cpp	/^	TestSet($/;"	f	struct:TestSet
+TestSet	d16.cpp	/^struct TestSet {$/;"	s	file:
+TrainingType	minigame/combat/combat.cpp	/^struct TrainingType {$/;"	s	file:
+VECTOR_ABILITY_POINTERS_DEFAULT	minigame/combat/combat.cpp	/^VECTOR_ABILITY_POINTERS_DEFAULT = {$/;"	v
+VITALITY_BASE	minigame/combat/combat.cpp	/^int const VITALITY_BASE = 4;$/;"	v
+VITALITY_MINIMUM	minigame/combat/combat.cpp	/^int const VITALITY_MINIMUM = 1;$/;"	v
+VectorAbilityPointers	minigame/combat/combat.cpp	/^typedef std::vector<Ability *> VectorAbilityPointers;$/;"	t	file:
+WEAPON_TRAINING_DAMAGE	minigame/combat/combat.cpp	/^int const WEAPON_TRAINING_DAMAGE =  3;$/;"	v
+WEAPON_TRAINING_TO_HIT	minigame/combat/combat.cpp	/^int const WEAPON_TRAINING_TO_HIT = -3;$/;"	v
+ability_attack	minigame/combat/combat.cpp	/^	ability_attack ,$/;"	e	enum:ability_id	file:
+ability_id	minigame/combat/combat.cpp	/^enum ability_id {$/;"	g	file:
+ability_none	minigame/combat/combat.cpp	/^	ability_none ,$/;"	e	enum:ability_id	file:
+ability_open_wounds	minigame/combat/combat.cpp	/^	ability_open_wounds ,$/;"	e	enum:ability_id	file:
+ability_type	minigame/combat/combat.cpp	/^enum ability_type {$/;"	g	file:
+ability_type_apply_counters	minigame/combat/combat.cpp	/^	ability_type_apply_counters ,$/;"	e	enum:ability_type	file:
+ability_type_attack	minigame/combat/combat.cpp	/^	ability_type_attack , \/\/ governed by the type of weapon, so the range(if I get to implement range) will be set to weapon's range$/;"	e	enum:ability_type	file:
+ability_type_buff	minigame/combat/combat.cpp	/^	ability_type_buff ,$/;"	e	enum:ability_type	file:
+ability_type_instant	minigame/combat/combat.cpp	/^	ability_type_instant ,$/;"	e	enum:ability_type	file:
+ability_type_magic	minigame/combat/combat.cpp	/^	ability_type_magic ,$/;"	e	enum:ability_type	file:
+ability_type_none	minigame/combat/combat.cpp	/^	ability_type_none ,$/;"	e	enum:ability_type	file:
+ability_weaken	minigame/combat/combat.cpp	/^	ability_weaken ,$/;"	e	enum:ability_id	file:
+add	d16.cpp	/^	int add;$/;"	m	struct:TestSet	file:
+add	d16.h	/^	int add = 0;$/;"	m	struct:RollResult
+add_progres	minigame/crafting/crafting.cpp	/^Character::add_progres(int const delta_prog) {$/;"	f	class:Character
+apply_ability_result	minigame/combat/combat.cpp	/^CombatEntity::apply_ability_result($/;"	f	class:CombatEntity
+apply_result_in_combat	minigame/combat/combat.cpp	/^apply_result_in_combat($/;"	f
+apply_results_in_combat	minigame/combat/combat.cpp	/^apply_results_in_combat($/;"	f
+arr_stat	minigame/combat/combat.cpp	/^	std::array< int , STAT_TYPE_COUNT > arr_stat = {{$/;"	m	struct:CombatEntity	file:
+base_attack	minigame/combat/combat.cpp	/^	int base_attack = 1;$/;"	m	struct:MonsterType	file:
+base_damage	minigame/combat/combat.cpp	/^	int base_damage = 1;$/;"	m	struct:MonsterType	file:
+base_defense	minigame/combat/combat.cpp	/^	int base_defense = 1;$/;"	m	struct:MonsterType	file:
+base_hp_max	minigame/combat/combat.cpp	/^	int base_hp_max = 0;$/;"	m	struct:MonsterType	file:
+calc_d16_score	d16.cpp	/^calc_d16_score($/;"	f
+calc_d16_success_level_from_score	d16.cpp	/^int calc_d16_success_level_from_score($/;"	f
+calc_progres_for_next_level	minigame/crafting/crafting.cpp	/^calc_progres_for_next_level(int const level) {$/;"	f
+cost	minigame/combat/combat.cpp	/^	int cost;$/;"	m	struct:TrainingType	file:
+cost	minigame/crafting/crafting.h	/^	int cost;$/;"	m	struct:Action
+count	minigame/combat/combat.cpp	/^	int count;$/;"	m	struct:AbilityResult	file:
+counter_array	minigame/combat/combat.cpp	/^	std::array< int , COUNTER_TYPE_COUNT > counter_array = {0};$/;"	m	struct:CombatEntity	file:
+counter_function_reduction	minigame/combat/combat.cpp	/^typedef int counter_function_reduction(int * counter);$/;"	t	file:
+counter_perform_decrement	minigame/combat/combat.cpp	/^counter_function_reduction counter_perform_decrement;$/;"	v
+counter_perform_decrement	minigame/combat/combat.cpp	/^int counter_perform_decrement(int * counter) {$/;"	f
+counter_perform_halving	minigame/combat/combat.cpp	/^counter_function_reduction counter_perform_halving;$/;"	v
+counter_perform_halving	minigame/combat/combat.cpp	/^counter_perform_halving(int * counter) {$/;"	f
+counter_type	minigame/combat/combat.cpp	/^	enum counter_type counter_type;$/;"	m	struct:AbilityResult	typeref:enum:AbilityResult::counter_type	file:
+counter_type	minigame/combat/combat.cpp	/^enum counter_type {$/;"	g	file:
+counter_type_bleed	minigame/combat/combat.cpp	/^	counter_type_bleed ,$/;"	e	enum:counter_type	file:
+counter_type_damage	minigame/combat/combat.cpp	/^	counter_type_damage , \/\/ this will be "missing health", and replaces "hp_current"$/;"	e	enum:counter_type	file:
+counter_type_none	minigame/combat/combat.cpp	/^	counter_type_none ,$/;"	e	enum:counter_type	file:
+counter_type_poison	minigame/combat/combat.cpp	/^	counter_type_poison ,$/;"	e	enum:counter_type	file:
+counter_type_slowness	minigame/combat/combat.cpp	/^	counter_type_slowness ,$/;"	e	enum:counter_type	file:
+counter_type_weakness	minigame/combat/combat.cpp	/^	counter_type_weakness ,$/;"	e	enum:counter_type	file:
+d16_required_roll_for_success	d16.cpp	/^int d16_required_roll_for_success($/;"	f
+default_max_durability	minigame/combat/combat.cpp	/^	int default_max_durability = 1;$/;"	m	struct:ItemBase	file:
+description	minigame/combat/combat.cpp	/^	const char * description;$/;"	m	struct:MonsterType	file:
+devd16_perform_tests	d16.cpp	/^void devd16_perform_tests(void) {$/;"	f
+diceroll	d16.cpp	/^	int diceroll;$/;"	m	struct:TestSet	file:
+diceroll	d16.h	/^	int diceroll = 0;$/;"	m	struct:RollResult
+display_debugish_thing	main.cpp	/^display_debugish_thing(void) {$/;"	f
+display_list_of_all_tries	main.cpp	/^display_list_of_all_tries($/;"	f
+display_table_item_base	minigame/combat/combat.cpp	/^display_table_item_base(FILE * f)$/;"	f
+display_table_item_type	minigame/combat/combat.cpp	/^display_table_item_type(FILE * f)$/;"	f
+duration	minigame/combat/combat.cpp	/^	int duration = 1;$/;"	m	struct:EffectEntity	file:
+expected_success_level	d16.cpp	/^	int expected_success_level;$/;"	m	struct:TestSet	file:
+fprint	d16.cpp	/^	int fprint(FILE * f) const {$/;"	f	struct:TestSet
+fprint	d16.cpp	/^RollResult::fprint(FILE * f) const {$/;"	f	class:RollResult
+fprint	minigame/combat/combat.cpp	/^Ability::fprint(FILE * f) {$/;"	f	class:Ability
+fprint	minigame/combat/combat.cpp	/^AbilityResult::fprint( FILE * f ) const {$/;"	f	class:AbilityResult
+fprint	minigame/combat/combat.cpp	/^CombatEntity::fprint(FILE * f) {$/;"	f	class:CombatEntity
+fprint	minigame/combat/combat.cpp	/^EffectEntity:: fprint(FILE * f) const {$/;"	f	class:EffectEntity
+fprint	minigame/combat/combat.cpp	/^ItemBase::fprint( FILE * f$/;"	f	class:ItemBase
+fprint	minigame/combat/combat.cpp	/^ItemEntity::fprint(FILE * f) {$/;"	f	class:ItemEntity
+fprint_all_counters	minigame/combat/combat.cpp	/^CombatEntity::fprint_all_counters(FILE * f)  {$/;"	f	class:CombatEntity
+fprint_counter_full_description	minigame/combat/combat.cpp	/^fprint_counter_full_description($/;"	f
+fprint_hp	minigame/combat/combat.cpp	/^CombatEntity::fprint_hp(FILE * f) {$/;"	f	class:CombatEntity
+fprint_nonzero_counters	minigame/combat/combat.cpp	/^CombatEntity::fprint_nonzero_counters(FILE * f)  {$/;"	f	class:CombatEntity
+fprint_rollmod_array	minigame/combat/combat.cpp	/^fprint_rollmod_array($/;"	f
+fprint_vector_of_strings	minigame/interface.cpp	/^fprint_vector_of_strings($/;"	f
+get_counter_delta	minigame/combat/combat.cpp	/^AbilityResult::get_counter_delta() const {$/;"	f	class:AbilityResult
+get_counter_value	minigame/combat/combat.cpp	/^int CombatEntity::get_counter_value(enum counter_type ct) const {$/;"	f	class:CombatEntity
+get_max_stat	minigame/combat/combat.cpp	/^CombatEntity::get_max_stat(enum stat_type const st) const {$/;"	f	class:CombatEntity
+get_rollmod	minigame/combat/combat.cpp	/^ItemBase::get_rollmod(enum rollmod_type rt) const {$/;"	f	class:ItemBase
+get_rollmod	minigame/combat/combat.cpp	/^ItemEntity::get_rollmod(enum rollmod_type const rt) {$/;"	f	class:ItemEntity
+get_rollmod	minigame/combat/combat.cpp	/^int CombatEntity::get_rollmod(enum rollmod_type const rt) const {$/;"	f	class:CombatEntity
+get_score_roll	d16.cpp	/^RollResult::get_score_roll(void) const {$/;"	f	class:RollResult
+get_score_success	d16.cpp	/^RollResult::get_score_success(void) const {$/;"	f	class:RollResult
+get_stat	minigame/combat/combat.cpp	/^CombatEntity::get_stat(enum stat_type const st) const {$/;"	f	class:CombatEntity
+get_success_level	d16.cpp	/^RollResult::get_success_level(void) const {$/;"	f	class:RollResult
+get_target_of_ability	minigame/combat/combat.cpp	/^get_target_of_ability( \/* TODO handle more entities than actor-enemy, but that will come only after I make a robust system for selection *\/$/;"	f
+integer	interpreter.h	/^	int integer;$/;"	m	struct:InterpreterResult
+interpret_line_stdin	interpreter.h	/^interpret_line_stdin(void) {$/;"	f
+interpreter_result_type	interpreter.h	/^enum interpreter_result_type {$/;"	g
+interpreter_result_type_integer	interpreter.h	/^	interpreter_result_type_integer ,$/;"	e	enum:interpreter_result_type
+interpreter_result_type_none	interpreter.h	/^	interpreter_result_type_none ,$/;"	e	enum:interpreter_result_type
+interpreter_result_type_string	interpreter.h	/^	interpreter_result_type_string ,$/;"	e	enum:interpreter_result_type
+is_2handed	minigame/combat/combat.cpp	/^	bool is_2handed = false;$/;"	m	struct:ItemBase	file:
+is_add_counter	minigame/combat/combat.cpp	/^	bool is_add_counter = true;$/;"	m	struct:Ability	file:
+is_alive	minigame/combat/combat.cpp	/^	bool is_alive() const {$/;"	f	struct:CombatEntity
+is_breakable	minigame/combat/combat.cpp	/^	bool is_breakable = true;$/;"	m	struct:ItemBase	file:
+is_breakable	minigame/combat/combat.cpp	/^	bool is_breakable = true;$/;"	m	struct:ItemEntity	file:
+is_dead	minigame/combat/combat.cpp	/^	bool is_dead() const {$/;"	f	struct:CombatEntity
+is_success	d16.h	/^	bool is_success() const { return (success_level > 0); }$/;"	f	struct:RollResult
+item_base_get_pointer_from_id	minigame/combat/combat.cpp	/^ItemBase::item_base_get_pointer_from_id(size_t const id)$/;"	f	class:ItemBase
+item_base_id	minigame/combat/combat.cpp	/^	size_t item_base_id = 0;$/;"	m	struct:ItemEntity	file:
+item_type	minigame/combat/combat.cpp	/^enum item_type {$/;"	g	file:
+item_type_axe	minigame/combat/combat.cpp	/^	item_type_axe ,$/;"	e	enum:item_type	file:
+item_type_club	minigame/combat/combat.cpp	/^	item_type_club ,$/;"	e	enum:item_type	file:
+item_type_consumable	minigame/combat/combat.cpp	/^	item_type_consumable ,$/;"	e	enum:item_type	file:
+item_type_none	minigame/combat/combat.cpp	/^	item_type_none ,$/;"	e	enum:item_type	file:
+item_type_permanent	minigame/combat/combat.cpp	/^	item_type_permanent ,$/;"	e	enum:item_type	file:
+item_type_polearm	minigame/combat/combat.cpp	/^	item_type_polearm ,$/;"	e	enum:item_type	file:
+item_type_ranged_thrower	minigame/combat/combat.cpp	/^	item_type_ranged_thrower ,$/;"	e	enum:item_type	file:
+item_type_sword	minigame/combat/combat.cpp	/^	item_type_sword ,$/;"	e	enum:item_type	file:
+item_type_throwable	minigame/combat/combat.cpp	/^	item_type_throwable ,$/;"	e	enum:item_type	file:
+item_type_wearable	minigame/combat/combat.cpp	/^	item_type_wearable ,$/;"	e	enum:item_type	file:
+itementity_stat_durability_current	minigame/combat/combat.cpp	/^	itementity_stat_durability_current ,$/;"	e	enum:itementity_stat_type	file:
+itementity_stat_durability_max	minigame/combat/combat.cpp	/^	itementity_stat_durability_max ,$/;"	e	enum:itementity_stat_type	file:
+itementity_stat_quality	minigame/combat/combat.cpp	/^	itementity_stat_quality ,$/;"	e	enum:itementity_stat_type	file:
+itementity_stat_type	minigame/combat/combat.cpp	/^enum itementity_stat_type {$/;"	g	file:
+level_skill	minigame/crafting/crafting.h	/^	int level_skill = 0;$/;"	m	struct:Character
+level_stat	minigame/crafting/crafting.h	/^	int level_stat = 0;$/;"	m	struct:Character
+main	main.cpp	/^int main(int argc, char * argv[]) {$/;"	f
+make_roll_result	minigame/combat/combat.cpp	/^Ability::make_roll_result(int const score_add , int const score_multiply) const {$/;"	f	class:Ability
+max_stat	minigame/combat/combat.cpp	/^	std::array< int , STAT_TYPE_COUNT > max_stat = {{$/;"	m	struct:CombatEntity	file:
+minigame_crafting	minigame/crafting/crafting.cpp	/^minigame_crafting($/;"	f
+modifier_difficulty	minigame/combat/combat.cpp	/^	int modifier_difficulty;$/;"	m	struct:TrainingType	file:
+modifier_difficulty	minigame/crafting/crafting.h	/^	int modifier_difficulty;$/;"	m	struct:Action
+monster_type	minigame/combat/combat.cpp	/^enum monster_type {$/;"	g	file:
+monster_type_blob	minigame/combat/combat.cpp	/^	monster_type_blob ,$/;"	e	enum:monster_type	file:
+monster_type_devil	minigame/combat/combat.cpp	/^	monster_type_devil ,$/;"	e	enum:monster_type	file:
+monster_type_mootant	minigame/combat/combat.cpp	/^	monster_type_mootant ,$/;"	e	enum:monster_type	file:
+monster_type_none	minigame/combat/combat.cpp	/^	monster_type_none ,$/;"	e	enum:monster_type	file:
+monster_type_porkish	minigame/combat/combat.cpp	/^	monster_type_porkish ,$/;"	e	enum:monster_type	file:
+monster_type_undead	minigame/combat/combat.cpp	/^	monster_type_undead ,$/;"	e	enum:monster_type	file:
+monster_type_vermin	minigame/combat/combat.cpp	/^	monster_type_vermin ,$/;"	e	enum:monster_type	file:
+multiply	d16.cpp	/^	int multiply;$/;"	m	struct:TestSet	file:
+multiply	d16.h	/^	int multiply = 0;$/;"	m	struct:RollResult
+name	minigame/combat/combat.cpp	/^	const char * name = "[[ability.name:none]]";$/;"	m	struct:Ability	file:
+name	minigame/combat/combat.cpp	/^	const char * name = "[[effectentity:noname]]";$/;"	m	struct:EffectEntity	file:
+name	minigame/combat/combat.cpp	/^	const char * name = NULL;$/;"	m	struct:ItemBase	file:
+name	minigame/combat/combat.cpp	/^	const char * name;$/;"	m	struct:TrainingType	file:
+name	minigame/crafting/crafting.h	/^	const char * name;$/;"	m	struct:Action
+on_success_counter_type	minigame/combat/combat.cpp	/^	enum counter_type on_success_counter_type = counter_type_none;$/;"	m	struct:Ability	typeref:enum:Ability::counter_type	file:
+perform_example_combat	minigame/combat/combat.cpp	/^perform_example_combat(FILE * f)$/;"	f
+perform_post_counters_per_round_effects	minigame/combat/combat.cpp	/^CombatEntity::perform_post_counters_per_round_effects(void) {$/;"	f	class:CombatEntity
+pointer_weapon	minigame/combat/combat.cpp	/^typedef struct ItemEntity * pointer_weapon;$/;"	t	typeref:struct:ItemEntity	file:
+print	minigame/crafting/crafting.cpp	/^void Character::print() {$/;"	f	class:Character
+print_action	minigame/crafting/crafting.cpp	/^print_action(const Action &a){$/;"	f
+print_actions_table	minigame/crafting/crafting.cpp	/^print_actions_table(void) {$/;"	f
+print_rollresult	d16.cpp	/^print_rollresult($/;"	f
+print_table_ability	minigame/combat/combat.cpp	/^void print_table_ability(FILE * f) {$/;"	f
+progres_next	minigame/crafting/crafting.h	/^	int progres_next = 2;$/;"	m	struct:Character
+progres_skill	minigame/crafting/crafting.h	/^	int progres_skill = 0;$/;"	m	struct:Character
+ptr_available_ability	minigame/combat/combat.cpp	/^CombatEntity::ptr_available_ability($/;"	f	class:CombatEntity
+ptr_counter	minigame/combat/combat.cpp	/^int * CombatEntity::ptr_counter(enum counter_type ct) {$/;"	f	class:CombatEntity
+range	minigame/combat/combat.cpp	/^	int range = 0;$/;"	m	struct:ItemBase	file:
+range	minigame/combat/combat.cpp	/^	int range = 1;$/;"	m	struct:Ability	file:
+receive_damage	minigame/combat/combat.cpp	/^void CombatEntity::receive_damage(int damage) {$/;"	f	class:CombatEntity
+required_stat	minigame/combat/combat.cpp	/^	int required_stat[STAT_TYPE_COUNT] = { 0 };$/;"	m	struct:ItemBase	file:
+resources	minigame/crafting/crafting.h	/^	int resources = 10;$/;"	m	struct:Character
+roll_ability_result	minigame/combat/combat.cpp	/^roll_ability_result($/;"	f
+roll_attack	minigame/combat/combat.cpp	/^RollResult roll_attack($/;"	f
+roll_d16	d16.cpp	/^roll_d16(void)$/;"	f
+roll_result	minigame/combat/combat.cpp	/^	struct RollResult roll_result;$/;"	m	struct:AbilityResult	typeref:struct:AbilityResult::RollResult	file:
+roll_score	d16.h	/^	int roll_score = 0;$/;"	m	struct:RollResult
+rollmod	minigame/combat/combat.cpp	/^	int rollmod[ROLLMOD_TYPE_COUNT] = { 0 };$/;"	m	struct:EffectEntity	file:
+rollmod	minigame/combat/combat.cpp	/^	int rollmod[ROLLMOD_TYPE_COUNT] = { 0 };$/;"	m	struct:ItemBase	file:
+rollmod_add	minigame/combat/combat.cpp	/^	int rollmod_add = 0;$/;"	m	struct:Ability	file:
+rollmod_multiply	minigame/combat/combat.cpp	/^	int rollmod_multiply = 0;$/;"	m	struct:Ability	file:
+rollmod_type	minigame/combat/combat.cpp	/^	enum rollmod_type rollmod_type = rollmod_type_none;$/;"	m	struct:Ability	typeref:enum:Ability::rollmod_type	file:
+rollmod_type	minigame/combat/combat.cpp	/^enum rollmod_type {$/;"	g	file:
+rollmod_type_attack	minigame/combat/combat.cpp	/^	rollmod_type_attack ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_damage	minigame/combat/combat.cpp	/^	rollmod_type_damage ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_defense	minigame/combat/combat.cpp	/^	rollmod_type_defense ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_dexterity	minigame/combat/combat.cpp	/^	rollmod_type_dexterity ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_magic	minigame/combat/combat.cpp	/^	rollmod_type_magic ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_none	minigame/combat/combat.cpp	/^	rollmod_type_none ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_strength	minigame/combat/combat.cpp	/^	rollmod_type_strength ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_to_hit	minigame/combat/combat.cpp	/^	rollmod_type_to_hit ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_vitality	minigame/combat/combat.cpp	/^	rollmod_type_vitality ,$/;"	e	enum:rollmod_type	file:
+rollmod_type_wisdom	minigame/combat/combat.cpp	/^	rollmod_type_wisdom ,$/;"	e	enum:rollmod_type	file:
+select_fprint_vector_of_strings	minigame/interface.cpp	/^select_fprint_vector_of_strings($/;"	f
+skill	minigame/combat/combat.cpp	/^enum skill {$/;"	g	file:
+skill_alchemistry	minigame/combat/combat.cpp	/^	skill_alchemistry ,$/;"	e	enum:skill	file:
+skill_mathemagics	minigame/combat/combat.cpp	/^	skill_mathemagics ,$/;"	e	enum:skill	file:
+skill_none	minigame/combat/combat.cpp	/^	skill_none ,$/;"	e	enum:skill	file:
+slot_type	minigame/combat/combat.cpp	/^enum slot_type {$/;"	g	file:
+slot_type_body	minigame/combat/combat.cpp	/^	slot_type_body ,$/;"	e	enum:slot_type	file:
+slot_type_hand	minigame/combat/combat.cpp	/^	slot_type_hand ,$/;"	e	enum:slot_type	file:
+slot_type_head	minigame/combat/combat.cpp	/^	slot_type_head ,$/;"	e	enum:slot_type	file:
+slot_type_legs	minigame/combat/combat.cpp	/^	slot_type_legs ,$/;"	e	enum:slot_type	file:
+slot_type_none	minigame/combat/combat.cpp	/^	slot_type_none ,$/;"	e	enum:slot_type	file:
+slot_type_offhand	minigame/combat/combat.cpp	/^	slot_type_offhand ,$/;"	e	enum:slot_type	file:
+slot_type_ring	minigame/combat/combat.cpp	/^	slot_type_ring ,$/;"	e	enum:slot_type	file:
+stat	minigame/combat/combat.cpp	/^	int stat[ITEMENTITY_STAT_COUNT] = {$/;"	m	struct:ItemEntity	file:
+stat_type	minigame/combat/combat.cpp	/^enum stat_type {$/;"	g	file:
+stat_type_dexterity	minigame/combat/combat.cpp	/^	stat_type_dexterity ,$/;"	e	enum:stat_type	file:
+stat_type_none	minigame/combat/combat.cpp	/^	stat_type_none ,$/;"	e	enum:stat_type	file:
+stat_type_strength	minigame/combat/combat.cpp	/^	stat_type_strength ,$/;"	e	enum:stat_type	file:
+stat_type_wisdom	minigame/combat/combat.cpp	/^	stat_type_wisdom ,$/;"	e	enum:stat_type	file:
+string	interpreter.h	/^	std::string string;$/;"	m	struct:InterpreterResult
+success_level	d16.h	/^	int success_level = 0;$/;"	m	struct:RollResult
+success_score	d16.h	/^	int success_score = 0; \/\/ maybe this should be storable as negatives? success_level of 0 should be enough$/;"	m	struct:RollResult
+targeting_type	minigame/combat/combat.cpp	/^	enum targeting_type targeting_type = targeting_type_none;$/;"	m	struct:Ability	typeref:enum:Ability::targeting_type	file:
+targeting_type	minigame/combat/combat.cpp	/^enum targeting_type {$/;"	g	file:
+targeting_type_area	minigame/combat/combat.cpp	/^	targeting_type_area ,$/;"	e	enum:targeting_type	file:
+targeting_type_enemy	minigame/combat/combat.cpp	/^	targeting_type_enemy ,$/;"	e	enum:targeting_type	file:
+targeting_type_friend	minigame/combat/combat.cpp	/^	targeting_type_friend ,$/;"	e	enum:targeting_type	file:
+targeting_type_none	minigame/combat/combat.cpp	/^	targeting_type_none ,$/;"	e	enum:targeting_type	file:
+targeting_type_self	minigame/combat/combat.cpp	/^	targeting_type_self ,$/;"	e	enum:targeting_type	file:
+type	interpreter.h	/^	enum interpreter_result_type type = interpreter_result_type_none;$/;"	m	struct:InterpreterResult	typeref:enum:InterpreterResult::interpreter_result_type
+type	minigame/combat/combat.cpp	/^	enum ability_type type = ability_type_none;$/;"	m	struct:Ability	typeref:enum:Ability::ability_type	file:
+type	minigame/combat/combat.cpp	/^	enum item_type type = item_type_none;$/;"	m	struct:ItemBase	typeref:enum:ItemBase::item_type	file:
+vector_ability_pointer_get_vector_of_strings	minigame/combat/combat.cpp	/^vector_ability_pointer_get_vector_of_strings($/;"	f
+vector_available_abilities	minigame/combat/combat.cpp	/^	VectorAbilityPointers vector_available_abilities = VECTOR_ABILITY_POINTERS_DEFAULT;$/;"	m	struct:CombatEntity	file:
+vector_available_abilities_strings	minigame/combat/combat.cpp	/^		vector_available_abilities_strings$/;"	m	struct:CombatEntity	file:
+weapon_type	minigame/combat/combat.cpp	/^enum weapon_type {$/;"	g	file:
+weapon_type_axe	minigame/combat/combat.cpp	/^	weapon_type_axe ,$/;"	e	enum:weapon_type	file:
+weapon_type_club	minigame/combat/combat.cpp	/^	weapon_type_club ,$/;"	e	enum:weapon_type	file:
+weapon_type_none	minigame/combat/combat.cpp	/^	weapon_type_none ,$/;"	e	enum:weapon_type	file:
+weapon_type_polearm	minigame/combat/combat.cpp	/^	weapon_type_polearm ,$/;"	e	enum:weapon_type	file:
+weapon_type_ranged_thrower	minigame/combat/combat.cpp	/^	weapon_type_ranged_thrower ,$/;"	e	enum:weapon_type	file:
+weapon_type_sword	minigame/combat/combat.cpp	/^	weapon_type_sword ,$/;"	e	enum:weapon_type	file:
+weapon_type_throwable	minigame/combat/combat.cpp	/^	weapon_type_throwable ,$/;"	e	enum:weapon_type	file:

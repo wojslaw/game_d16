@@ -12,6 +12,6 @@ run: $(APPNAME)
 	./$(APPNAME)
 
 tags: $(SOURCES) $(HEADERS)
-	ctags -R *
+	ctags-exuberant -R *
 
 .phony: nofile
