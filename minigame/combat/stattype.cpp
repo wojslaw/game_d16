@@ -3,6 +3,7 @@
 std::array<const char * , STAT_TYPE_COUNT>
 STRINGTABLE_STATTYPE_SYMBOL = {{
 	[stat_type_none] = "[[symbol:stat_type_none]]" ,
+	[stat_type_level] = "LVL" ,
 	[stat_type_strength] = "STR" ,
 	[stat_type_dexterity] =  "DEX" ,
 	[stat_type_wisdom] = "WIS" ,
@@ -12,6 +13,7 @@ STRINGTABLE_STATTYPE_SYMBOL = {{
 std::array<const char * , STAT_TYPE_COUNT>
 STRINGTABLE_STATTYPE_NAME = {{
 	[stat_type_none] = "[[name:stat_type_none]]" ,
+	[stat_type_level] = "Level" ,
 	[stat_type_strength] = "Strength" ,
 	[stat_type_dexterity] =  "Dexterity" ,
 	[stat_type_wisdom] = "Wisdom" ,

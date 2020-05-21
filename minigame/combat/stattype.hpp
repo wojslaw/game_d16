@@ -3,8 +3,11 @@
 #include <array>
 
 
+int const MAX_LEVEl = 0x10;
+
 enum stat_type {
 	stat_type_none ,
+	stat_type_level ,
 	stat_type_strength ,
 	stat_type_dexterity ,
 	stat_type_wisdom ,

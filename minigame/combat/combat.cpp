@@ -1,5 +1,24 @@
 #include "combat.h"
 
+int const ROUND_COUNT = 8;
+
+
+enum material_type {
+	material_type_none ,
+	material_type_food ,
+	material_type_wood ,
+	material_type_iron ,
+	material_type_coal ,
+	material_type_rope ,
+	material_type_fabric ,
+	material_type_solvent ,
+	COUNT_MATERIAL_TYPE ,
+};
+
+typedef
+std::array< int , COUNT_MATERIAL_TYPE>
+ArrayMaterials;
+
 
 
 enum item_type {
@@ -13,6 +32,11 @@ enum item_type {
 	item_type_club ,
 	item_type_throwable ,
 	item_type_ranged_thrower ,
+	item_type_junk_wood ,
+	item_type_junk_iron ,
+	item_type_junk_coal ,
+	item_type_junk_rope ,
+	item_type_junk_fabric ,
 	COUNT_ITEM_TYPE ,
 };
 
@@ -51,6 +75,16 @@ STRINGTABLE_ITEM_TYPE[COUNT_ITEM_TYPE] = {
 		= "item_type_throwable" ,
 	[item_type_ranged_thrower]
 		= "item_type_ranged_thrower" ,
+	[item_type_junk_wood]
+		= "item_type_junk_wood" ,
+	[item_type_junk_iron]
+		= "item_type_junk_iron" ,
+	[item_type_junk_coal]
+		= "item_type_junk_coal" ,
+	[item_type_junk_rope]
+		= "item_type_junk_rope" ,
+	[item_type_junk_fabric]
+		= "item_type_junk_fabric" ,
 };
 
 
@@ -181,11 +215,13 @@ enum counter_type {
  // that would hold data on "is it halving per turn, or decrement. does it deal damage? and so on", to decouple things further
  // I also want to put all the stats in an array, to also have stat_type_strength etc.
 	counter_type_none ,
+	counter_type_resolve ,
 	counter_type_damage , // this will be "missing health", and replaces "hp_current"
 	counter_type_poison ,
 	counter_type_bleed ,
-	counter_type_slowness ,
-	counter_type_weakness ,
+	counter_type_modify_stat_dexterity ,
+	counter_type_modify_stat_strength ,
+	counter_type_modify_stat_wisdom ,
 	COUNTER_TYPE_COUNT ,
 };
 
@@ -213,33 +249,39 @@ STRINGTABLE_TARGETING_TYPE[TARGETING_TYPE_COUNT] = {
 std::array<const char * , COUNTER_TYPE_COUNT>
 STRINGTABLE_COUNTERTYPE_SYMBOL = {{
 	[counter_type_none] = "[[counter_type_none]]" ,
+	[counter_type_resolve] = "HR" ,
 	[counter_type_damage] = "RD",
 	[counter_type_poison] = "cP" ,
 	[counter_type_bleed] = "cB" ,
-	[counter_type_slowness] = "cS" ,
-	[counter_type_weakness] = "cW" ,
+	[counter_type_modify_stat_dexterity] = "mD" ,
+	[counter_type_modify_stat_strength] = "mS" ,
+	[counter_type_modify_stat_wisdom] = "mW" ,
 }};
 
 
 std::array<const char * , COUNTER_TYPE_COUNT>
-STRINGTABLE_COUNTERTYPE_NAME {{
+STRINGTABLE_COUNTERTYPE_NAME_POSITIVE {{
 	[counter_type_none] = "[[counter_type_none]]" ,
+	[counter_type_resolve] = "HeroicResolve" ,
 	[counter_type_damage] = "ReceivedDamage",
 	[counter_type_poison] = "Poison" ,
 	[counter_type_bleed] = "Bleed" ,
-	[counter_type_slowness] = "Slowness" ,
-	[counter_type_weakness] = "Weakness"
+	[counter_type_modify_stat_dexterity] = "Quickness" ,
+	[counter_type_modify_stat_strength] = "Might" ,
+	[counter_type_modify_stat_wisdom] = "Enlightnment" ,
 }};
 
 
 std::array<const char * , COUNTER_TYPE_COUNT>
 STRINGTABLE_COUNTERTYPE_NAME_NEGATIVE = {{
 	[counter_type_none] = "[[counter_type_none]]" ,
+	[counter_type_resolve] = "Despair" ,
 	[counter_type_damage] = "Overheal",
 	[counter_type_poison] = "Antibodies(resist poison)" ,
 	[counter_type_bleed] = "Clotting(resist bleed)" ,
-	[counter_type_slowness] = "Quickness" ,
-	[counter_type_weakness] = "Might"
+	[counter_type_modify_stat_dexterity] = "Slowness" ,
+	[counter_type_modify_stat_strength] = "Weakness" ,
+	[counter_type_modify_stat_wisdom] = "Dumbness" ,
 }};
 
 
@@ -253,7 +295,7 @@ fprint_counter_full_description(
 	assert(ct > COUNTER_TYPE_COUNT);
 	const char * str
 		= value >= 0
-		? STRINGTABLE_COUNTERTYPE_NAME[ct]
+		? STRINGTABLE_COUNTERTYPE_NAME_POSITIVE[ct]
 		: STRINGTABLE_COUNTERTYPE_NAME_NEGATIVE[ct];
 	int const normalized_value
 		= value >= 0
@@ -605,7 +647,11 @@ ItemEntity::get_rollmod(enum rollmod_type const rt) {
 		return 0;
 	}
 	int const rollmod = TABLE_ITEM_BASE[item_base_id].get_rollmod(rt);
-	return (rollmod + stat[itementity_stat_quality]);
+	int const quality_bonus
+		= rollmod > 0
+		? stat[itementity_stat_quality]
+		: 0;
+	return (rollmod + quality_bonus);
 }
 
 
@@ -656,7 +702,7 @@ struct AbilityResult {
 			: (-success_level);
 	}
 	void fprint( FILE * f ) const;
-	int get_counter_delta() const;
+	int get_counter_delta() const; /* the hell was that supposed to be?/ */
 };
 
 
@@ -759,7 +805,7 @@ Ability ARRAY_ABILITIES[] = {
 	{
 		.name = "Weaken" ,
 		.type = ability_type_magic ,
-		.on_success_counter_type = counter_type_weakness ,
+		.on_success_counter_type = counter_type_modify_stat_strength ,
 		.targeting_type = targeting_type_enemy ,
 		.rollmod_type = rollmod_type_magic ,
 		.rollmod_add = -3 ,
@@ -859,19 +905,24 @@ EffectEntity:: fprint(FILE * f) const {
 
 
 struct CombatEntity {
-	std::array< int , COUNTER_TYPE_COUNT > counter_array = {0};
+	bool is_alive = true;
+	std::array< int , COUNTER_TYPE_COUNT > counter = {0};
 	std::array< int , STAT_TYPE_COUNT > max_stat = {{
 		[stat_type_none] = 0 ,
+		[stat_type_level] = MAX_LEVEl ,
 		[stat_type_strength] = 1 ,
 		[stat_type_dexterity] = 1 ,
 		[stat_type_wisdom] = 1 ,
 	}};
-	std::array< int , STAT_TYPE_COUNT > arr_stat = {{
+	std::array< int , STAT_TYPE_COUNT > stat = {{
 		[stat_type_none] = 0 ,
+		[stat_type_level] = 0 ,
 		[stat_type_strength] = 1 ,
 		[stat_type_dexterity] = 1 ,
 		[stat_type_wisdom] = 1 ,
 	}};
+	std::array<bool , ABILITIES_COUNT >  /* hmm - just noticed, that it will be slightly more difficult to program rudimentary AI(i will need to implement probability_weight for abilities anyway). for now, the AI will only have 1 ability */
+		arr_is_ability_available = {{ true, false }};
 
 	VectorAbilityPointers vector_available_abilities = VECTOR_ABILITY_POINTERS_DEFAULT;
 	std::vector< const char * >
@@ -887,16 +938,15 @@ struct CombatEntity {
 	void fprint_all_counters(FILE * f);
 	void fprint_nonzero_counters(FILE * f);
 
-	bool is_dead() const {
-		return (
-				get_counter_value(counter_type_damage)
-				>
-				get_rollmod(rollmod_type_vitality)
-			   );
-	};
-	bool is_alive() const {
-		return !is_dead();
-	};
+	bool is_ability_available( size_t const ability_id ) const {
+		if(ability_id >= ABILITY_COUNT) {
+			return false;
+		}
+		return arr_is_ability_available.at(ability_id);
+	}
+	std::vector<const char * >
+		generate_vector_of_available_ability_names(void) const;
+
 
 	int get_counter_value(enum counter_type ct) const;
 	int * ptr_counter(enum counter_type ct);
@@ -904,10 +954,10 @@ struct CombatEntity {
 	int get_stat(enum stat_type const st) const;
 	int get_max_stat(enum stat_type const st) const;
 
-	void receive_damage(int damage);
+	int receive_damage(int damage); /*** return dealt damage */
 	void apply_ability_result( const AbilityResult &ability_result );
 
-	void perform_post_counters_per_round_effects(void);
+	void perform_post_round_calculations(void);
 
 	void equip(); //TODO
 };
@@ -915,21 +965,22 @@ struct CombatEntity {
 
 
 int CombatEntity::get_rollmod(enum rollmod_type const rt) const {
-	 /* TODO make use of this */
 	int rollmod = 0;
 	switch(rt) {
 		case rollmod_type_strength:
 			rollmod =
 				(get_stat(stat_type_strength)
-				 - get_counter_value(counter_type_weakness));
+				 + get_counter_value(counter_type_modify_stat_strength));
 			break;
 		case rollmod_type_dexterity:
 			rollmod =
 				(get_stat(stat_type_dexterity)
-				 - get_counter_value(counter_type_slowness));
+				 + get_counter_value(counter_type_modify_stat_dexterity));
 			break;
 		case rollmod_type_wisdom:
-			rollmod = get_stat(stat_type_wisdom);
+			rollmod =
+				(get_stat(stat_type_wisdom))
+				 + get_counter_value(counter_type_modify_stat_wisdom);
 			break;
 		case rollmod_type_magic:
 			rollmod = get_rollmod(rollmod_type_wisdom);
@@ -964,7 +1015,7 @@ int
 CombatEntity::get_stat(enum stat_type const st) const {
 	assert( st > stat_type_none );
 	assert( st < STAT_TYPE_COUNT );
-	return arr_stat[st];
+	return stat[st];
 }
 
 
@@ -1070,11 +1121,36 @@ CombatEntity::fprint_hp(FILE * f) {
 }
 
 
-void CombatEntity::receive_damage(int damage) {
-	if( damage < 0 ) {
-		damage = 0;
+int CombatEntity::receive_damage(int damage) {
+	/* turns out this just isn't used at all xDD because everything goes through apply_ability_result */
+	if( damage <= 0 ) {
+		return 0;
 	}
-	(*ptr_counter(counter_type_damage)) += damage;
+
+	/* hmm - how to handle resolve? I wanted resolve to nullify any damage that goes above max_damage that would kill the warrior */
+	/* but it would mean, that the warrior will want to reduce their max health  */
+	/* I know! but it will be harder to read */
+	/* actually, no, because I have to work with is_dead function :/ */
+	int const max_damage = get_rollmod(rollmod_type_vitality);
+	int const cur_damage = counter[counter_type_damage];
+	int const new_damage = cur_damage + damage;
+	int const resolve = counter[counter_type_resolve];
+	counter[counter_type_damage] = new_damage;
+
+	if( new_damage > max_damage ) {
+		is_alive = false;
+		if( resolve > 0 ) {
+			/* printf( "resolve saved (dmg %d , res %d)\n" */
+			/* 		, new_damage */
+			/* 		, resolve ); */
+			/*  --(counter[counter_type_resolve]); */
+			is_alive = true;
+		} else {
+			/* printf( "killed! %d  %d" , new_damage , resolve ); */
+		}
+	}
+
+	return damage;
 }
 
 
@@ -1092,6 +1168,7 @@ CombatEntity::apply_ability_result(
 typedef int counter_function_reduction(int * counter);
 
 counter_function_reduction counter_perform_halving;
+counter_function_reduction counter_perform_towards_zero_by_one;
 counter_function_reduction counter_perform_decrement;
 
 int
@@ -1112,6 +1189,8 @@ counter_perform_halving(int * counter) {
 }
 
 
+
+
 int counter_perform_decrement(int * counter) {
 	if((*counter) > 0) {
 		--(*counter);
@@ -1119,30 +1198,87 @@ int counter_perform_decrement(int * counter) {
 	return (*counter);
 }
 
+int counter_perform_towards_zero_by_one(int * counter) {
+	if((*counter) > 0) {
+		 --(*counter);
+	} else if((*counter) < 0) {
+		 ++(*counter);
+	}
+	return (*counter);
+
+}
+
 
 int * CombatEntity::ptr_counter(enum counter_type ct) {
 	assert( ct > counter_type_none );
 	assert( ct >= 0);
 	assert( ct < COUNTER_TYPE_COUNT);
-	return &(counter_array[ct]);
+	return &(counter[ct]);
 }
 
 
 int CombatEntity::get_counter_value(enum counter_type ct) const {
 	assert( ct >= 0);
 	assert( ct < COUNTER_TYPE_COUNT);
-	return counter_array[ct];
+	return counter[ct];
 }
 
 
 void
-CombatEntity::perform_post_counters_per_round_effects(void) {
+CombatEntity::perform_post_round_calculations(void) {
 	// damage-over-time
-	receive_damage( counter_perform_halving(ptr_counter(counter_type_poison)) );
-	receive_damage( counter_perform_halving(ptr_counter(counter_type_bleed)) );
+	int damage = 0;
+	damage += counter_perform_halving(ptr_counter(counter_type_bleed));
+	{ /* poison*/
+		/* It seems more interesting, if poison has a slightly different mechanic: instead of halving, */
+		/* this means, that poison damages you faster with low values, but doesn't scale */
+		damage += counter_perform_decrement(ptr_counter(counter_type_poison)) ;
+		damage += counter_perform_decrement(ptr_counter(counter_type_poison)) ;
+	}
+
 	// only reduce
-	counter_perform_decrement(ptr_counter(counter_type_slowness));
-	counter_perform_decrement(ptr_counter(counter_type_weakness));
+	counter_perform_towards_zero_by_one(ptr_counter(counter_type_modify_stat_dexterity));
+	counter_perform_towards_zero_by_one(ptr_counter(counter_type_modify_stat_strength));
+	counter_perform_towards_zero_by_one(ptr_counter(counter_type_modify_stat_wisdom));
+
+	// apply damage
+	receive_damage(damage);
+
+	/* check if still alive */
+
+	int const max_damage = get_rollmod(rollmod_type_vitality);
+	int const cur_damage = counter[counter_type_damage];
+	int const resolve = counter[counter_type_resolve];
+
+	if( cur_damage > max_damage ) {
+		is_alive = false;
+		if( resolve > 0 ) {
+			printf( "resolve saved (dmg %d , res %d)\n"
+					, cur_damage
+					, resolve );
+			 --(counter[counter_type_resolve]);
+			is_alive = true;
+		} else {
+			printf( "killed! %d  %d" , cur_damage , resolve );
+		}
+	}
+}
+
+
+std::vector<const char * >
+CombatEntity::generate_vector_of_available_ability_names(void) const{
+	/* this is defs inneficient in terms of computing power, */
+	/* but incredibly easy to understand */
+	std::vector<const char * > vec_names;
+	vec_names.reserve(ABILITIES_COUNT);
+	size_t id = 0;
+	for( auto const b : arr_is_ability_available ) {
+		if( b ) {
+			vec_names.push_back( ARRAY_ABILITIES[id].name );
+		}
+		++id;
+	}
+	return vec_names;
 }
 
 
@@ -1240,35 +1376,64 @@ apply_results_in_combat(
 };
 
 
-
-
-
-
-
-
-void
-perform_example_combat(FILE * f)
+CombatEntity
+generate_enemy_of_level(
+		int const level
+		)
 {
-	CHECK_TABLE_ABILITY();
-	print_table_ability(f);
-	struct CombatEntity you;
-	you.arr_stat[stat_type_strength] = 3;
-	you.arr_stat[stat_type_dexterity] = 4;
-	struct CombatEntity foe;
+	auto enemy = CombatEntity();
+	enemy.stat[stat_type_strength]  += level;
+	enemy.stat[stat_type_dexterity] += level;
+	enemy.stat[stat_type_wisdom]    += level;
+	
+	enemy.max_stat[stat_type_strength]  += level;
+	enemy.max_stat[stat_type_dexterity] += level;
+	enemy.max_stat[stat_type_wisdom]    += level;
+	return enemy;
+}
 
+
+
+struct PlayerEntity {
+	ArrayMaterials material = { 0 };
+	std::vector<CombatEntity> vector_warriors;
+
+
+	PlayerEntity();
+};
+
+
+PlayerEntity::PlayerEntity() {
+	CombatEntity first_warrior;
+	first_warrior.counter[counter_type_resolve] = 2;
+	vector_warriors.emplace_back(first_warrior);
+}
+
+
+
+
+void fight_versus_opponent(
+		 FILE * f
+		,CombatEntity &you
+		,CombatEntity &foe
+		)
+{
 	fprintf( f , "you: " );
 	you.fprint(f);
 	fprintf( f , "\n" );
 	fprintf( f , "foe: " );
 	foe.fprint(f);
 	fprintf( f , "\n" );
-	int const ROUND_COUNT = 8;
 
 	int round = 0;
 	for( ; round < ROUND_COUNT ; ++round ) {
 		fprintf(f , "  round %d\n" , round);
-		int selection = select_fprint_vector_of_strings( stdout , you.vector_available_abilities_strings ); //TODO
-		if( selection < 0 || selection >= (int)you.vector_available_abilities.size() ) { // I'm (probably unneccesarily) afraid of casting here
+		auto const vector_available_ability_names
+			=  you.generate_vector_of_available_ability_names();
+		int selection = select_fprint_vector_of_strings(
+				 stdout
+				,vector_available_ability_names ); //TODO
+		if( selection < 0 || selection >= (int)vector_available_ability_names.size() ) { // I'm (probably unneccesarily) afraid of casting here
 			fprintf( f , "aborting, since you selected %d\n" , selection);
 			goto jump_end;
 		}
@@ -1281,9 +1446,8 @@ perform_example_combat(FILE * f)
 					,foe );
 		you_ability_result.fprint( f );
 		fprintf( f , "\n" );
-		int const enemy_selection = rand() % 3;
-		fprintf( f, "foe(%d):" , enemy_selection );
-		const auto foe_ability = foe.ptr_available_ability(selection);
+		fprintf( f, "foe(%d):" , 0 );
+		const auto foe_ability = foe.ptr_available_ability(0); /* ability[0] so only basic attack */
 		const AbilityResult foe_ability_result
 			= roll_ability_result(
 					 foe_ability
@@ -1305,22 +1469,22 @@ perform_example_combat(FILE * f)
 		apply_result_in_combat(
 				 foe_targeted_entity
 				,foe_ability_result );
-		if( you.is_dead() ) {
-			fprintf( f , "you died\n" );
-			break;
-		}
-		if( foe.is_dead() ) {
-			fprintf( f , "foe died\n" );
-			break;
-		}
-		you.perform_post_counters_per_round_effects();
-		foe.perform_post_counters_per_round_effects();
+		you.perform_post_round_calculations();
+		foe.perform_post_round_calculations();
 		fprintf( f , "you: " );
 		you.fprint(f);
 		fprintf( f , "\n" );
 		fprintf( f , "foe: " );
 		foe.fprint(f);
 		fprintf( f , "\n" );
+		if( !(you.is_alive) ) {
+			fprintf( f , "you died\n" );
+			break;
+		}
+		if( !(foe.is_alive) ) {
+			fprintf( f , "foe died\n" );
+			break;
+		}
 	}
 jump_end:
 	fprintf( f, "  Combat ended after %d rounds. Results:\n" , round );
@@ -1330,6 +1494,34 @@ jump_end:
 	fprintf( f , "foe: " );
 	foe.fprint(f);
 	fprintf( f , "\n" );
+	
+}
+
+
+
+
+
+
+void
+perform_example_combat(FILE * f)
+{
+	PlayerEntity player;
+	CHECK_TABLE_ABILITY();
+	print_table_ability(f);
+	struct CombatEntity &you = player.vector_warriors.at(0);;
+	you.stat[stat_type_strength] =  2;
+	you.stat[stat_type_dexterity] = 4;
+	you.stat[stat_type_wisdom] = 2;
+	struct CombatEntity foe = generate_enemy_of_level(2);
+
+
+	fight_versus_opponent(
+			f
+			,you
+			,foe
+			);
+
+
 }
 
 

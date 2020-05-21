@@ -33,10 +33,6 @@ display_list_of_all_tries(
 }
 
 
-void
-display_debugish_thing(void) {
-	
-}
 
 
 

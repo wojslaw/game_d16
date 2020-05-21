@@ -190,3 +190,36 @@ void devd16_perform_tests(void) {
 		fprintf( stderr, " all ok");
 	}
 }
+
+
+void
+fprint_rollresult_prediction(
+		FILE * f
+		,int const add
+		,int const multiply
+		)
+{
+	/* TODO test */
+	fprintf( f , "for (a %d , m %d)"
+			,add
+			,multiply );
+	int const required_roll = d16_required_roll_for_success( add );
+	if( required_roll > ROLLMAX ) {
+		fprintf( f , "impossible. requires roll 0x%x" , required_roll );
+		return;
+	} else if( required_roll <= ROLLMIN) {
+		fprintf( f , "success guaranteed. requires roll 0x%x" , required_roll );
+	} else {
+		fprintf( f , "requires roll 0x%x" , required_roll );
+	}
+
+	fprintf( f , "range of success levels:" );
+	auto const roll_min = RollResult( required_roll , add , multiply );
+	auto const roll_max = RollResult( ROLLMAX , add , multiply );
+	auto const succ_min = roll_min.get_success_level();
+	auto const succ_max = roll_max.get_success_level();
+	fprintf( f , "[ %d ; %d ]"
+			, succ_min
+			, succ_max
+		   );
+}
