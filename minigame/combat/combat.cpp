@@ -23,6 +23,7 @@ ArrayMaterials;
 
 enum item_type {
 	item_type_none ,
+	item_type_zero ,
 	item_type_wearable ,
 	item_type_consumable ,
 	item_type_permanent ,
@@ -32,6 +33,7 @@ enum item_type {
 	item_type_club ,
 	item_type_throwable ,
 	item_type_ranged_thrower ,
+	item_type_junk ,
 	item_type_junk_wood ,
 	item_type_junk_iron ,
 	item_type_junk_coal ,
@@ -57,6 +59,8 @@ const char *
 STRINGTABLE_ITEM_TYPE[COUNT_ITEM_TYPE] = {
 	[item_type_none]
 		= "item_type_none" ,
+	[item_type_zero]
+		= "item_type_zero" ,
 	[item_type_wearable]
 		= "item_type_wearable" ,
 	[item_type_consumable]
@@ -75,6 +79,8 @@ STRINGTABLE_ITEM_TYPE[COUNT_ITEM_TYPE] = {
 		= "item_type_throwable" ,
 	[item_type_ranged_thrower]
 		= "item_type_ranged_thrower" ,
+	[item_type_junk]
+		= "item_type_junk" ,
 	[item_type_junk_wood]
 		= "item_type_junk_wood" ,
 	[item_type_junk_iron]
@@ -90,8 +96,8 @@ STRINGTABLE_ITEM_TYPE[COUNT_ITEM_TYPE] = {
 
 enum slot_type {
 	slot_type_none ,
-	slot_type_hand ,
-	slot_type_offhand ,
+	slot_type_hand_main ,
+	slot_type_hand_second ,
 	slot_type_head ,
 	slot_type_body ,
 	slot_type_legs ,
@@ -102,13 +108,20 @@ enum slot_type {
 
 std::array<const char * , COUNT_SLOT_TYPE>
 STRINGTABLE_SLOT_TYPE = {{
-	[slot_type_none] = "none" ,
-	[slot_type_hand] = "hand" ,
-	[slot_type_offhand] = "offhand" ,
-	[slot_type_head] = "head" ,
-	[slot_type_body] = "body" ,
-	[slot_type_legs] = "legs" ,
-	[slot_type_ring] = "ring" ,
+	[slot_type_none]
+		= "slot_type_none" ,
+	[slot_type_hand_main]
+		= "slot_type_hand_main" ,
+	[slot_type_hand_second]
+		= "slot_type_hand_second" ,
+	[slot_type_head]
+		= "slot_type_head" ,
+	[slot_type_body]
+		= "slot_type_body" ,
+	[slot_type_legs]
+		= "slot_type_legs" ,
+	[slot_type_ring]
+		= "slot_type_ring" ,
 }};
 
 
@@ -332,10 +345,12 @@ STRINGTABLE_SKILL[SKILL_COUNT] = {
 
 struct ItemBase {
 	enum item_type type = item_type_none;
+	enum slot_type slot_type = slot_type_none;
 	bool is_2handed = false;
 	bool is_breakable = true;
 	int default_max_durability = 1;
 	int required_stat[STAT_TYPE_COUNT] = { 0 };
+	// itemstat_type]
 	int range = 0;
 	int rollmod[ROLLMOD_TYPE_COUNT] = { 0 };
 	const char * name = NULL;
@@ -380,13 +395,14 @@ const  ItemBase
 TABLE_ITEM_BASE[] = {
 
 	{
-		type : item_type_none,
+		type  : item_type_zero,
 		range : 1,
-		name  :  "None" 
+		name  :  "[[BUG? item zero should not be seen in game! something gone wrong!]]" 
 	},
 
 	{
-		type : item_type_polearm ,
+		type : item_type_wearable ,
+		slot_type : slot_type_hand_main ,
 		is_2handed : true ,
 		default_max_durability : 6 ,
 		range  :  2,
@@ -406,7 +422,8 @@ TABLE_ITEM_BASE[] = {
 	},
 
 	{
-		type : item_type_sword   ,
+		type : item_type_wearable ,
+		slot_type : slot_type_hand_main ,
 		default_max_durability : 6 ,
 		range  :  1,
 		rollmod  : {
@@ -424,8 +441,8 @@ TABLE_ITEM_BASE[] = {
 		name  :  "Training Sword" ,
 	},
 	{
-		type : item_type_axe     ,
-		is_2handed : true ,
+		type : item_type_wearable ,
+		slot_type : slot_type_hand_main ,
 		default_max_durability : 8 ,
 		range  :  1,
 		rollmod  : {
@@ -444,7 +461,8 @@ TABLE_ITEM_BASE[] = {
 	},
 
 	{
-		type : item_type_polearm ,
+		type : item_type_wearable ,
+		slot_type : slot_type_hand_main ,
 		is_2handed : true ,
 		default_max_durability : 8 ,
 		range  :  2 ,
@@ -464,7 +482,8 @@ TABLE_ITEM_BASE[] = {
 	},
 
 	{
-		type : item_type_sword   ,
+		type : item_type_wearable ,
+		slot_type : slot_type_hand_main ,
 		default_max_durability : 12 ,
 		range  :  1 ,
 		rollmod  : {
@@ -484,7 +503,6 @@ TABLE_ITEM_BASE[] = {
 
 /* 	{ */
 /* 		type : item_type_axe , */
-/* 		//required_strength  :  2 , */
 /* 		to_hit  : -4 , */
 /* 		/1* rollmod  :  { *1/ */
 /* 		/1* 	[rollmod_type_to_hit] = -4 , *1/ */
@@ -538,12 +556,12 @@ TABLE_ITEM_BASE[] = {
 	};
 
 
-int const ITEM_BASE_COUNT = sizeof(TABLE_ITEM_BASE) / sizeof(TABLE_ITEM_BASE[0]);
+int const COUNT_ITEM_BASE = sizeof(TABLE_ITEM_BASE) / sizeof(TABLE_ITEM_BASE[0]);
 
 const ItemBase *
 ItemBase::item_base_get_pointer_from_id(size_t const id)
 {
-	assert( id < ITEM_BASE_COUNT );
+	assert( id < COUNT_ITEM_BASE );
 	return &(TABLE_ITEM_BASE[id]);
 }
 
@@ -551,22 +569,22 @@ ItemBase::item_base_get_pointer_from_id(size_t const id)
 struct ItemEntity;
 typedef struct ItemEntity * pointer_weapon;
 
-enum itementity_stat_type {
-	itementity_stat_quality ,
-	itementity_stat_durability_max ,
-	itementity_stat_durability_current ,
-	ITEMENTITY_STAT_COUNT ,
+enum itemstat_type {
+	itemstat_quality ,
+	itemstat_durability_max ,
+	itemstat_durability_current ,
+	COUNT_ITEMSTAT ,
 };
 
 
 
-const char * STRINGTABLE_itementity_STAT[ITEMENTITY_STAT_COUNT] = {
-	[itementity_stat_quality] = "quality" ,
-	[itementity_stat_durability_max] = "durability_max" ,
-	[itementity_stat_durability_current] = "durability_current" ,
+
+
+const char * STRINGTABLE_ITEMENTITY_STAT[COUNT_ITEMSTAT] = {
+	[itemstat_quality] = "quality" ,
+	[itemstat_durability_max] = "durability_max" ,
+	[itemstat_durability_current] = "durability_current" ,
 };
-
-
 
 
 
@@ -583,7 +601,7 @@ display_table_item_type(FILE * f)
 void
 ItemBase::fprint( FILE * f
 ) const {
-	fprintf( f , "{t %d rs %d rd %d rw %d"
+	fprintf( f , "{t %d rs %d rd %d rw %d " /* TODO print all stats */
 			, type
 			, required_stat[stat_type_strength]
 			, required_stat[stat_type_dexterity]
@@ -602,7 +620,7 @@ ItemBase::fprint( FILE * f
 void
 display_table_item_base(FILE * f)
 {
-	for(size_t i = 0; i < ITEM_BASE_COUNT ; ++i ) {
+	for(size_t i = 0; i < COUNT_ITEM_BASE ; ++i ) {
 		fprintf(f , "%lu" , i );
 		TABLE_ITEM_BASE[i].fprint(f);
 		fprintf(f , "\n" );
@@ -614,45 +632,104 @@ display_table_item_base(FILE * f)
 
 
 struct ItemEntity {
-	size_t item_base_id = 0;
+	size_t item_base_id = 0; /* TODO add ref_itembase() */
+	/* maybe even remove the concept of item_base_id and only use reference to itembase? */
 	bool is_breakable = true;
-	int stat[ITEMENTITY_STAT_COUNT] = {
-		[itementity_stat_quality] = 0 ,
-		[itementity_stat_durability_max] = 1 ,
-		[itementity_stat_durability_current] = 1 ,
+	int stat[COUNT_ITEMSTAT] = {
+		[itemstat_quality] = 0 ,
+		[itemstat_durability_max] = 1 ,
+		[itemstat_durability_current] = 1 ,
 	};
-	int get_rollmod(enum rollmod_type const rt);
-	void fprint(FILE * f);
-	void fprint_stat(FILE * f);
+	enum item_type get_item_type(void) const {
+		return TABLE_ITEM_BASE[item_base_id].type;
+	}
+	bool is_none( void ) const {
+		return item_base_id == 0;
+	}
+	bool is_2handed( void ) const {
+		return TABLE_ITEM_BASE[item_base_id].is_2handed;
+	}
+	int get_rollmod(enum rollmod_type const rt) const ;
+	enum slot_type get_slottype(void) const {
+		return TABLE_ITEM_BASE[item_base_id].slot_type;
+	}
+	int get_required_stat(enum stat_type const st) const {
+		return TABLE_ITEM_BASE[item_base_id].required_stat[st];
+	}
+	void fprint(FILE * f) const;
+	void fprint_stat(FILE * f) const;
+
+	ItemEntity( ) {  } ;
+
+	ItemEntity(
+			 const size_t _item_base_id
+			,int const quality
+			,int const durability_delta
+			) {
+		assert(_item_base_id < COUNT_ITEM_BASE);
+		item_base_id = _item_base_id;
+		stat[itemstat_quality] = quality;
+		stat[itemstat_durability_max]
+			= TABLE_ITEM_BASE[_item_base_id].default_max_durability ;
+		stat[itemstat_durability_current]
+			= stat[itemstat_durability_max]
+			+ durability_delta ;
+	}
 };
 
 
 void
-ItemEntity::fprint(FILE * f) {
-	fprintf( f , "ItemEntity:{q %d,d %d/%d,base[0x%lx]:{"
-			,stat[itementity_stat_quality]
-			,stat[itementity_stat_durability_max]
-			,stat[itementity_stat_durability_current]
+ItemEntity::fprint(FILE * f) const {
+	fprintf( f , "{q %d,d %d/%d,base[0x%lx]:"
+			,stat[itemstat_quality]
+			,stat[itemstat_durability_max]
+			,stat[itemstat_durability_current]
 			,item_base_id
 		   );
 	const struct ItemBase * ptr_weaponbase = ItemBase::item_base_get_pointer_from_id(item_base_id);
 	ptr_weaponbase->fprint(f);
-	fprintf( f , "}}" );
+	fprintf( f , "}" );
 }
 
 
 int
-ItemEntity::get_rollmod(enum rollmod_type const rt) {
-	if( stat[itementity_stat_durability_current] <= 0 ) {
+ItemEntity::get_rollmod(enum rollmod_type const rt) const {
+	if( stat[itemstat_durability_current] <= 0 ) {
 		return 0;
 	}
 	int const rollmod = TABLE_ITEM_BASE[item_base_id].get_rollmod(rt);
 	int const quality_bonus
 		= rollmod > 0
-		? stat[itementity_stat_quality]
+		? stat[itemstat_quality]
 		: 0;
 	return (rollmod + quality_bonus);
 }
+
+
+typedef std::array<ItemEntity , COUNT_SLOT_TYPE>
+EquippedItem; /* seems like it could allow duping, but whatever, we will see */
+/* it could be more robust to have a global vector of item entities in game, and then just pass references/pointers around */
+
+
+void
+fprint_equipped_items(
+		 FILE * f
+		,EquippedItem const &eq )
+{
+	int equipped_items = 0;
+	for( const auto &e : eq) {
+		if( !(e.is_none()) ) {
+			fprintf( f , "%s:"
+					,STRINGTABLE_SLOT_TYPE[e.get_slottype()] );
+			e.fprint(f);
+			fprintf( f , "\n" );
+			++equipped_items;
+		}
+	}
+	fprintf( f , "equipped_items count: %d" , equipped_items );
+}
+
+
 
 
 
@@ -770,7 +847,7 @@ Ability::fprint(FILE * f) {
 
 
 
-Ability ARRAY_ABILITIES[] = {
+Ability TABLE_ABILITIES[] = {
 	{
 		.name = "Attack" ,
 		.type = ability_type_attack ,
@@ -824,22 +901,70 @@ Ability ARRAY_ABILITIES[] = {
 	} ,
 };
 
-const size_t ABILITIES_COUNT = sizeof(ARRAY_ABILITIES) / sizeof(ARRAY_ABILITIES[0]);
+const size_t ABILITIES_COUNT = sizeof(TABLE_ABILITIES) / sizeof(TABLE_ABILITIES[0]);
 
 
 void
 CHECK_TABLE_ABILITY(void) {
-	for( auto &a : ARRAY_ABILITIES ) {
+	bool found_errors = false;
+	for( auto &a : TABLE_ABILITIES ) {
 		if( a.type == ability_type_none ) {
 			fprintf( stderr , "ability_type_none at ability \"%s\"\n"
 					,a.name );
+			found_errors = true;
 		}
+	}
+	if( found_errors ) {
+		fprintf( stderr , "found errors when checking TABLE_ABILITIES\n" );
 	}
 }
 
+
+void
+CHECK_TABLE_ITEM_BASE(void) {
+	/* TODO check for validity of all type-signifying enums */
+	bool found_errors = false;
+	for( auto &ib : TABLE_ITEM_BASE ) {
+		bool has_errors = false;
+		/* don't allow item_none */
+		if( ib.type == item_type_none ) {
+			has_errors = true;
+			fprintf( stderr , "(item is of item_type_none)" );
+			ib.fprint(stderr) ;
+		}
+		/* wearable items must have set slot_type */
+		if( ib.type == item_type_wearable && ib.slot_type == slot_type_none ) {
+			has_errors = true;
+			fprintf( stderr , "(wearable item without proper slot_type)" );
+		}
+		/* 2handed weapons must have slot_type_hand_main */
+		if( ib.is_2handed
+				&&
+				(ib.slot_type != slot_type_hand_main)
+				 ) {
+			has_errors = true;
+			fprintf( stderr , "(2handed weapon with slot_type != %d: \"%s\")"
+				,slot_type_hand_second
+				,STRINGTABLE_SLOT_TYPE[slot_type_hand_second] );
+		}
+		if(has_errors) {
+			has_errors = true;
+			ib.fprint(stderr) ;
+			fprintf( stderr , "\n");
+			found_errors = true;
+		}
+	}
+
+	if( found_errors ) {
+		fprintf( stderr , "found errors when checking TABLE_ITEM_BASE\n" );
+	}
+}
+
+
+
 void print_table_ability(FILE * f) {
 	size_t i = 0;
-	for( auto &a : ARRAY_ABILITIES ) {
+	for( auto &a : TABLE_ABILITIES ) {
 		fprintf( f
 				, "0x%zx"
 				, i );
@@ -869,9 +994,9 @@ Ability::make_roll_result(int const score_add , int const score_multiply) const 
 
 const VectorAbilityPointers
 VECTOR_ABILITY_POINTERS_DEFAULT = {
-	&(ARRAY_ABILITIES[0]) ,
-	&(ARRAY_ABILITIES[1]) ,
-	&(ARRAY_ABILITIES[2]) ,
+	&(TABLE_ABILITIES[0]) ,
+	&(TABLE_ABILITIES[1]) ,
+	&(TABLE_ABILITIES[2]) ,
 };
 
 
@@ -924,6 +1049,8 @@ struct CombatEntity {
 	std::array<bool , ABILITIES_COUNT >  /* hmm - just noticed, that it will be slightly more difficult to program rudimentary AI(i will need to implement probability_weight for abilities anyway). for now, the AI will only have 1 ability */
 		arr_is_ability_available = {{ true, false }};
 
+	EquippedItem equipped;
+
 	VectorAbilityPointers vector_available_abilities = VECTOR_ABILITY_POINTERS_DEFAULT;
 	std::vector< const char * >
 		vector_available_abilities_strings
@@ -938,6 +1065,12 @@ struct CombatEntity {
 	void fprint_all_counters(FILE * f);
 	void fprint_nonzero_counters(FILE * f);
 
+	bool is_slot_empty( enum slot_type const slot_type ) const {
+		assert( slot_type > slot_type_none );
+		assert( slot_type < COUNT_SLOT_TYPE );
+		return equipped[slot_type].is_none();
+	}
+
 	bool is_ability_available( size_t const ability_id ) const {
 		if(ability_id >= ABILITY_COUNT) {
 			return false;
@@ -951,6 +1084,7 @@ struct CombatEntity {
 	int get_counter_value(enum counter_type ct) const;
 	int * ptr_counter(enum counter_type ct);
 	int get_rollmod(enum rollmod_type const rt) const;
+	int get_itembonus_rollmod(enum rollmod_type const rt) const;
 	int get_stat(enum stat_type const st) const;
 	int get_max_stat(enum stat_type const st) const;
 
@@ -959,9 +1093,96 @@ struct CombatEntity {
 
 	void perform_post_round_calculations(void);
 
-	void equip(); //TODO
+	bool equip(
+			/* return true on success */
+			 FILE * f /* would be nice to decouple interface */
+			,ItemEntity &ie /* change this itementity into default itementity(that is: none)*/
+			);
+
+	void fprint_equipped( FILE * f ) const {
+		fprint_equipped_items(f , equipped);
+	}
 };
 
+
+
+bool
+CombatEntity::equip(
+		 FILE * f /* would be nice to decouple interface */
+		,ItemEntity &ie
+		) {
+	if( ie.is_none() ) {
+		fprintf( f , "tried to equip item that is_none\n"); 
+		return false;
+	}
+	if( ie.get_item_type() != item_type_wearable ) {
+		fprintf( f , "tried to equip item that is not wearable\n"); 
+		return false;
+	}
+
+	for( int stat_type = (stat_type_none + 1) /* this iterating disturbs me */
+			; stat_type < STAT_TYPE_COUNT /* but alas - no better idea currently */
+			; ++stat_type ) {
+		auto const cur_stat_type   = static_cast< enum stat_type >(stat_type);
+		int const has_stat = get_stat(cur_stat_type);
+		int const need_stat = ie.get_required_stat(cur_stat_type);
+		if( has_stat < need_stat ) {
+			fprintf( f , "too low %s: (has: %d need: %d)\n"
+					,STRINGTABLE_STATTYPE_SYMBOL[cur_stat_type]
+					,has_stat
+					,need_stat
+					);
+			return false;
+		}
+	}
+
+
+	enum slot_type slot_type = ie.get_slottype();
+	if( !(is_slot_empty(slot_type)) ) {
+		fprintf( f, "slot_type %d(%s) already occupied\n"
+				,slot_type
+				,STRINGTABLE_SLOT_TYPE[slot_type]
+				);
+		return false;
+	}
+	if( ie.is_2handed() && !(is_slot_empty(slot_type_hand_second)) ) {
+		fprintf( f, "2handed weapon, but offhand(slot_type %d(%s)) already occupied\n"
+				,slot_type_hand_second
+				,STRINGTABLE_SLOT_TYPE[slot_type_hand_second]
+				);
+		return false;
+	}
+
+	/* all good: we can equip the item now */
+	if( is_slot_empty(slot_type) ) { /* completely unnecesary, but I will leave this condition in case */
+		equipped[slot_type] = ie;
+		ie = ItemEntity();
+		return true;
+	}
+
+	fprintf( f, "somehow slot_type %d(%s) is already occupied\n"
+			,slot_type
+			,STRINGTABLE_SLOT_TYPE[slot_type]
+		   );
+
+	return false;
+}
+
+
+
+
+int
+CombatEntity::get_itembonus_rollmod(
+		enum rollmod_type const rt
+		) const {
+	int bonus = 0;
+	for( const auto &ie : equipped ) {
+		if( ie.get_item_type() == item_type_wearable ) {
+			bonus += ie.get_rollmod(rt);
+		}
+	}
+	return bonus;
+}
 
 
 int CombatEntity::get_rollmod(enum rollmod_type const rt) const {
@@ -1226,6 +1447,15 @@ int CombatEntity::get_counter_value(enum counter_type ct) const {
 
 void
 CombatEntity::perform_post_round_calculations(void) {
+	/* idea that will make for an interesting mechanic: at the end of each round, all rollmods and counters and stats will be recalculated for each entity */
+	/* This will have 2 effects: */
+	/* 1. gameplay:
+	 * "first move" will matter much, much less.
+	 * with the current pending idea for handling abilities and combat, it will mean that the effects will get stacked in a particular order, but I'm also thinking about working it all more like a queue: each round a vector_pending_ability_results_to_apply will be iterated over, and then emptied. it could be done also as a stack, but nah I don't think so. */
+	/* 2. code:
+	 * all calculations will be stored in one place.
+	 * my premature_optimization instinct says, that it will be "le more efficient XD" than the current idea of doing everything a la functional programming.
+	 * currently, I'm planning to make it so the rollmods are always calculated on-demand */
 	// damage-over-time
 	int damage = 0;
 	damage += counter_perform_halving(ptr_counter(counter_type_bleed));
@@ -1274,7 +1504,7 @@ CombatEntity::generate_vector_of_available_ability_names(void) const{
 	size_t id = 0;
 	for( auto const b : arr_is_ability_available ) {
 		if( b ) {
-			vec_names.push_back( ARRAY_ABILITIES[id].name );
+			vec_names.push_back( TABLE_ABILITIES[id].name );
 		}
 		++id;
 	}
@@ -1505,10 +1735,22 @@ jump_end:
 void
 perform_example_combat(FILE * f)
 {
-	PlayerEntity player;
 	CHECK_TABLE_ABILITY();
-	print_table_ability(f);
+	CHECK_TABLE_ITEM_BASE();
+	printf( "\n\n" );
+
+
+	PlayerEntity player;
+	//print_table_ability(f);
 	struct CombatEntity &you = player.vector_warriors.at(0);;
+	ItemEntity item_0 = ItemEntity(
+			  4
+			,+1
+			, 0
+			);
+	you.equip( f , item_0 );
+	you.fprint_equipped(f);
+	exit(EXIT_SUCCESS);
 	you.stat[stat_type_strength] =  2;
 	you.stat[stat_type_dexterity] = 4;
 	you.stat[stat_type_wisdom] = 2;
