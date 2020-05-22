@@ -1,0 +1,2 @@
+1. Check whether counters and stats are printed when they are non-zero(I suspect some might be printed only when they are `>0`, instead of `!=0`)
+2. Map TABLE_ITEM and TABLE_ABILITY, to allow searching by string

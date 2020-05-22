@@ -4,13 +4,11 @@ SOURCES=\
 		d16.cpp \
 		minigame/crafting/crafting.cpp \
 		minigame/combat/combat.cpp \
-		interpreter.cpp \
 		minigame/interface.cpp \
 		minigame/combat/rollmod.cpp \
 		minigame/combat/stattype.cpp
 HEADERS= \
 		 d16.h \
-		 interpreter.h \
 		 minigame/interface.hpp \
 		 minigame/crafting/crafting.h \
 		 minigame/combat/combat.h \

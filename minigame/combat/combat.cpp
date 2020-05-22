@@ -81,16 +81,6 @@ STRINGTABLE_ITEM_TYPE[COUNT_ITEM_TYPE] = {
 		= "item_type_ranged_thrower" ,
 	[item_type_junk]
 		= "item_type_junk" ,
-	[item_type_junk_wood]
-		= "item_type_junk_wood" ,
-	[item_type_junk_iron]
-		= "item_type_junk_iron" ,
-	[item_type_junk_coal]
-		= "item_type_junk_coal" ,
-	[item_type_junk_rope]
-		= "item_type_junk_rope" ,
-	[item_type_junk_fabric]
-		= "item_type_junk_fabric" ,
 };
 
 
@@ -440,6 +430,7 @@ TABLE_ITEM_BASE[] = {
 		} ,
 		name  :  "Training Sword" ,
 	},
+
 	{
 		type : item_type_wearable ,
 		slot_type : slot_type_hand_main ,
@@ -499,6 +490,44 @@ TABLE_ITEM_BASE[] = {
 			[rollmod_type_wisdom   ]  = 0 ,
 		} ,
 		name  :  "Shortsword" 
+	},
+
+	{
+		type : item_type_wearable ,
+		slot_type : slot_type_body ,
+		default_max_durability : 12 ,
+		rollmod  : {
+			[rollmod_type_none     ]  = 0 ,
+			[rollmod_type_vitality ]  = 0 ,
+			[rollmod_type_attack   ]  = 0 ,
+			[rollmod_type_magic    ]  = 0 ,
+			[rollmod_type_to_hit   ]  = 0 ,
+			[rollmod_type_defense  ]  =  3 ,
+			[rollmod_type_damage   ]  = 0 ,
+			[rollmod_type_strength ]  = 0 ,
+			[rollmod_type_dexterity]  = 0 ,
+			[rollmod_type_wisdom   ]  = 0 ,
+		} ,
+		name  :  "Gambeson" 
+	},
+
+	{
+		type : item_type_wearable ,
+		slot_type : slot_type_body ,
+		default_max_durability : 20 ,
+		rollmod  : {
+			[rollmod_type_none     ]  = 0 ,
+			[rollmod_type_vitality ]  = 0 ,
+			[rollmod_type_attack   ]  = 0 ,
+			[rollmod_type_magic    ]  = 0 ,
+			[rollmod_type_to_hit   ]  = 0 ,
+			[rollmod_type_defense  ]  =  6 ,
+			[rollmod_type_damage   ]  = 0 ,
+			[rollmod_type_strength ]  = 0 ,
+			[rollmod_type_dexterity]  = 0 ,
+			[rollmod_type_wisdom   ]  = 0 ,
+		} ,
+		name  :  "Hauberk" 
 	},
 
 /* 	{ */
@@ -563,6 +592,19 @@ ItemBase::item_base_get_pointer_from_id(size_t const id)
 {
 	assert( id < COUNT_ITEM_BASE );
 	return &(TABLE_ITEM_BASE[id]);
+}
+
+
+void
+fprint_table_item_base_name_only( FILE * f ) {
+	size_t n = 0;
+	for( auto const &ib : TABLE_ITEM_BASE ) {
+		fprintf( f, "0x%02zx \"%s\"\n"
+				,n
+				,ib.name
+				);
+		++n;
+	}
 }
 
 
@@ -812,7 +854,7 @@ struct Ability {
 	int rollmod_add = 0;
 	int rollmod_multiply = 0;
 	int range = 1;
-	void fprint(FILE * f);
+	void fprint(FILE * f) const;
 
 	struct AbilityResult
 		make_roll_result(int const score_add , int const score_multiply) const;
@@ -831,7 +873,7 @@ enum ability_id {
 };
 
 void 
-Ability::fprint(FILE * f) {
+Ability::fprint(FILE * f) const {
 	fprintf( f , "(%s%s|%6s|%6s) TH %3d MULT %3d %s"
 			,STRINGTABLE_IS_ADD_COUNTER[is_add_counter]
 			,STRINGTABLE_COUNTERTYPE_SYMBOL[on_success_counter_type]
@@ -1046,6 +1088,9 @@ struct CombatEntity {
 		[stat_type_dexterity] = 1 ,
 		[stat_type_wisdom] = 1 ,
 	}};
+	
+	std::array<int , ROLLMOD_TYPE_COUNT >
+		equipment_rollmod;
 	std::array<bool , ABILITIES_COUNT >  /* hmm - just noticed, that it will be slightly more difficult to program rudimentary AI(i will need to implement probability_weight for abilities anyway). for now, the AI will only have 1 ability */
 		arr_is_ability_available = {{ true, false }};
 
@@ -1059,11 +1104,11 @@ struct CombatEntity {
 	Ability * ptr_available_ability( int const id ) const;
 
 	//methods
-	void fprint(FILE * f);
-	void fprint_long(FILE * f);
-	void fprint_hp(FILE * f);
-	void fprint_all_counters(FILE * f);
-	void fprint_nonzero_counters(FILE * f);
+	void fprint(FILE * f) const;
+	void fprint_long(FILE * f) const;
+	void fprint_hp(FILE * f) const;
+	void fprint_all_counters(FILE * f) const;
+	void fprint_nonzero_counters(FILE * f) const;
 
 	bool is_slot_empty( enum slot_type const slot_type ) const {
 		assert( slot_type > slot_type_none );
@@ -1102,8 +1147,28 @@ struct CombatEntity {
 	void fprint_equipped( FILE * f ) const {
 		fprint_equipped_items(f , equipped);
 	}
+	void fprint_rollmods_equipped( FILE * f ) const;
+	void fprint_rollmods_equipped_only_nonzero( FILE * f ) const ;
+	void fprint_available_abilities(FILE * f) const;
+
+	void calculate_equipment_bonuses(void);
 };
 
+void
+CombatEntity::calculate_equipment_bonuses(void) {
+	equipment_rollmod = { 0 };
+
+	for(auto const &ie : equipped ) {
+		if( ie.get_item_type() == item_type_wearable  ) {
+			for( int rt = (rollmod_type_none + 1) /* this iterating disturbs me */
+					; rt < ROLLMOD_TYPE_COUNT /* but alas - no better idea currently */
+					; ++rt ) {
+				auto const cur_rt = static_cast< enum rollmod_type >(rt);
+				equipment_rollmod[rt] += ie.get_rollmod(cur_rt);
+			}
+		}
+	}
+}
 
 
 bool
@@ -1292,7 +1357,7 @@ calculate_ability_use(
 
 
 void
-CombatEntity::fprint(FILE * f) {
+CombatEntity::fprint(FILE * f) const {
 	fprint_hp(f);
 	fprintf( f , "STR %d , DEX %d , WIS %d ;"
 			,get_stat(stat_type_strength)
@@ -1304,7 +1369,7 @@ CombatEntity::fprint(FILE * f) {
 
 
 void
-CombatEntity::fprint_nonzero_counters(FILE * f)  {
+CombatEntity::fprint_nonzero_counters(FILE * f)  const {
 	bool printed_some_counter = false;
 	for( int i = 0; i < COUNTER_TYPE_COUNT; ++i ) {
 		int const value = get_counter_value( (enum counter_type) i );
@@ -1325,7 +1390,7 @@ CombatEntity::fprint_nonzero_counters(FILE * f)  {
 
 
 void
-CombatEntity::fprint_all_counters(FILE * f)  {
+CombatEntity::fprint_all_counters(FILE * f)  const {
 	for( int i = 0; i < COUNTER_TYPE_COUNT; ++i ) {
 		fprintf( f , " c%s%d"
 				, STRINGTABLE_COUNTERTYPE_SYMBOL[i]
@@ -1335,10 +1400,57 @@ CombatEntity::fprint_all_counters(FILE * f)  {
 
 
 void
-CombatEntity::fprint_hp(FILE * f) {
+CombatEntity::fprint_hp(FILE * f) const {
 	fprintf( f , "(VIT: %d)"
 			,get_rollmod(rollmod_type_vitality)
 			);
+}
+
+
+void
+CombatEntity::fprint_rollmods_equipped( FILE * f ) const {
+	for(  int rt = rollmod_type_none
+		 ; rt < ROLLMOD_TYPE_COUNT
+		 ; ++rt
+		 ) {
+		fprintf( f , "%s %d "
+				,STRINGTABLE_ROLLMOD_SHORTNAME[rt]
+				,equipment_rollmod[rt]
+				);
+	}
+}
+
+
+void
+CombatEntity::fprint_available_abilities(
+		FILE * f
+		) const {
+	size_t id = 0;
+	for( auto const is_avail : arr_is_ability_available ) {
+		if( is_avail ) {
+			fprintf( f , "0x%zx %zu" , id , id);
+			TABLE_ABILITIES[id].fprint(f);
+			++id;
+			fprintf( f , "\n");
+		}
+	}
+}
+
+
+void
+CombatEntity::fprint_rollmods_equipped_only_nonzero( FILE * f ) const {
+	for(  int rt = rollmod_type_none
+		 ; rt < ROLLMOD_TYPE_COUNT
+		 ; ++rt
+		 ) {
+		int const rm = equipment_rollmod[rt];
+		if( rm != 0 ) {
+			fprintf( f , "%s %d "
+					,STRINGTABLE_ROLLMOD_SHORTNAME[rt]
+					,rm
+				   );
+		}
+	}
 }
 
 
@@ -1492,6 +1604,9 @@ CombatEntity::perform_post_round_calculations(void) {
 			printf( "killed! %d  %d" , cur_damage , resolve );
 		}
 	}
+
+
+	calculate_equipment_bonuses();
 }
 
 
@@ -1729,6 +1844,136 @@ jump_end:
 
 
 
+void fprint_vector_of_combat_entities(
+		 FILE * f
+		,std::vector< CombatEntity > const &ce
+		)
+{
+	size_t n = 0;
+	for( auto const & pw : ce ) {
+		fprintf( f , "0x%02zx " , n );
+		pw.fprint(f);
+		fprintf( f , "\n" );
+		++n;
+	}
+}
+
+
+void
+fprint_vector_of_combat_entities(
+		 FILE * f
+		,std::vector< CombatEntity > &vec_ce
+		)
+{
+	fprintf( f , "\n" );
+	size_t n = 0;
+	for( auto const &ce : vec_ce ) {
+		fprintf( f , "%zu %zx"
+				, n
+				, n );
+		ce.fprint(f);
+		fprintf( f , "\n" );
+		++n;
+	}
+	if( n != vec_ce.size() ) { /* some paranoid coding here, Mr. Linux Torvalds wouldn't be happy at that kind of defensive coding */
+		fprintf( stderr ,  "BUG? in %s(): n != vec_ce.size()\n" , __func__ );
+	} 
+}
+
+
+
+
+
+void fprint_vector_of_abilities(
+		 FILE * f
+		,std::vector< Ability > const &ab
+		)
+{
+	size_t n = 0;
+	for( auto const & a : ab ) {
+		fprintf( f , "0x%02zx " , n );
+		a.fprint(f);
+		fprintf( f , "\n" );
+		++n;
+	}
+}
+
+
+
+int
+select_fprint_vector_of_abilities(
+		 FILE * f
+		,std::vector< Ability > &vec_ab
+		)
+{
+	fprint_vector_of_abilities(
+			 f
+			,vec_ab
+			);
+	fprintf( f , "input selection:\n" ); // TODO: better system for handling selections
+	int selection = -1;
+	scanf( "%i" , &selection );
+	return selection;
+}
+
+
+
+
+
+
+void fight_versus_vectors(
+		 FILE * f
+		,std::vector< CombatEntity > &player_warriors
+		,std::vector< CombatEntity > &enemy_warriors
+		)
+{
+	if( player_warriors.size() <= 0 ) {
+		fprintf( f , "cannot start fight with 0 player_warriors\n" );
+		return;
+	}
+	assert( player_warriors.size() == 1 ); /* only 1 player character supported for now */
+	if( enemy_warriors.size() <= 0 ) {
+		fprintf( f , "cannot start fight with 0 enemy_warriors\n" );
+		return;
+	}
+	fprintf( f , "player warriors %zu:\n" , player_warriors.size());
+	fprint_vector_of_combat_entities(f , player_warriors);
+	fprintf( f , "enemy warriors %zu:\n" , enemy_warriors.size() );
+	fprint_vector_of_combat_entities(f , enemy_warriors);
+
+	int round = 0;
+	for( ; round < ROUND_COUNT ; ++round ) {
+		auto player_warrior = player_warriors.at(0);
+		player_warrior.fprint_available_abilities(f);
+		SelectionResult sel0 = SelectionResult();
+		sel0.fprint(f);
+		fprintf( f, "\n" );
+		int const selection_ability = sel0.get_integer();
+		if( selection_ability < 0 ) {
+			fprintf( f, "exiting, since you selected %d\n" , selection_ability );
+			goto jump_end;
+		}
+		if( player_warrior.arr_is_ability_available[selection_ability] ) {
+			fprintf( f , "\n" );
+			TABLE_ABILITIES[selection_ability].fprint(f);
+			fprintf( f , "\n" );
+		} else {
+			fprintf( f, "unavailable ability with id %d\n" , selection_ability );
+		}
+		/* int const target_selection */
+		/* 	= select_fprint_vector_of_combat_entities( */
+		/* 		FILE * f */
+		/* 		,std::vector< CombatEntity > &vec_ce */
+		/* 		); */
+	}
+
+
+jump_end:
+	return;
+}
+
+
+
 
 
 
@@ -1738,6 +1983,7 @@ perform_example_combat(FILE * f)
 	CHECK_TABLE_ABILITY();
 	CHECK_TABLE_ITEM_BASE();
 	printf( "\n\n" );
+	fprint_table_item_base_name_only(f);
 
 
 	PlayerEntity player;
@@ -1748,19 +1994,31 @@ perform_example_combat(FILE * f)
 			,+1
 			, 0
 			);
+	ItemEntity item_1 = ItemEntity(
+			  6
+			,+2
+			, 0
+			);
 	you.equip( f , item_0 );
+	you.equip( f , item_1 );
 	you.fprint_equipped(f);
-	exit(EXIT_SUCCESS);
+	you.calculate_equipment_bonuses();
+	fprintf( f , "\n" );
+	you.fprint_rollmods_equipped_only_nonzero(f);
 	you.stat[stat_type_strength] =  2;
 	you.stat[stat_type_dexterity] = 4;
 	you.stat[stat_type_wisdom] = 2;
-	struct CombatEntity foe = generate_enemy_of_level(2);
+	std::vector<CombatEntity>enemy_warriors = {
+		 generate_enemy_of_level(2)
+		,generate_enemy_of_level(2)
+	};
 
 
-	fight_versus_opponent(
+
+	fight_versus_vectors(
 			f
-			,you
-			,foe
+			,player.vector_warriors
+			,enemy_warriors
 			);
 
 
