@@ -911,7 +911,7 @@ Ability TABLE_ABILITIES[] = {
 		.range = 1
 	} ,
 	{
-		.name = "Heal" ,
+		.name = "Selfheal" ,
 		.type = ability_type_buff ,
 		.on_success_counter_type = counter_type_damage ,
 		.is_add_counter = false ,
@@ -944,6 +944,16 @@ Ability TABLE_ABILITIES[] = {
 };
 
 const size_t ABILITIES_COUNT = sizeof(TABLE_ABILITIES) / sizeof(TABLE_ABILITIES[0]);
+
+
+const Ability&
+ability_get_ref_by_id(int id) {
+	assert( id >=0 );
+	assert( id < (int)ABILITIES_COUNT );
+	return TABLE_ABILITIES[id];
+}
+
+
 
 
 void
@@ -1070,6 +1080,25 @@ EffectEntity:: fprint(FILE * f) const {
 }
 
 
+struct AvailableAbility {
+	int id = 0;
+	const Ability &ref;
+	int ai_weight = 0;
+	AvailableAbility( int const ability_id)
+		: ref(ability_get_ref_by_id( ability_id ))
+	{
+		id = ability_id;
+	}
+	void fprint(FILE * f) const ;
+};
+
+
+void
+AvailableAbility::fprint(FILE * f) const {
+	fprintf( f , "(id %d, aw %d)" , id , ai_weight );
+	ref.fprint(f);
+}
+
 
 struct CombatEntity {
 	bool is_alive = true;
@@ -1093,8 +1122,17 @@ struct CombatEntity {
 		equipment_rollmod;
 	std::array<bool , ABILITIES_COUNT >  /* hmm - just noticed, that it will be slightly more difficult to program rudimentary AI(i will need to implement probability_weight for abilities anyway). for now, the AI will only have 1 ability */
 		arr_is_ability_available = {{ true, false }};
+	std::vector< AvailableAbility > avail = {
+		AvailableAbility( 0 )
+	};
+	void fprint_avail_abilities(FILE * f) const;
+	const Ability& ref_avail_id(size_t const id) const {
+		assert( id < avail.size() );
+		return avail.at(id).ref;
+	}
 
 	EquippedItem equipped;
+
 
 	VectorAbilityPointers vector_available_abilities = VECTOR_ABILITY_POINTERS_DEFAULT;
 	std::vector< const char * >
@@ -1102,6 +1140,8 @@ struct CombatEntity {
 		= vector_ability_pointer_get_vector_of_strings(
 				vector_available_abilities );
 	Ability * ptr_available_ability( int const id ) const;
+
+
 
 	//methods
 	void fprint(FILE * f) const;
@@ -1152,7 +1192,61 @@ struct CombatEntity {
 	void fprint_available_abilities(FILE * f) const;
 
 	void calculate_equipment_bonuses(void);
+
+
+	AbilityResult 
+		roll_ability_id(
+				size_t const abilit_id
+				,const CombatEntity &target) const ;
 };
+
+
+
+AbilityResult
+roll_ability_result_by_ref(
+		 const Ability &ref_ability
+		,const CombatEntity &actor
+		,const CombatEntity &target ) {
+	/* TODO handling different types of stats for different abilities */
+	int bonus_actor = 0;
+	int bonus_target = 0;
+	int score_multiply = ref_ability.rollmod_multiply;
+	switch(ref_ability.type) {
+		case ability_type_attack:
+			bonus_actor = actor.get_rollmod(rollmod_type_to_hit);
+			bonus_target = target.get_rollmod(rollmod_type_defense);
+			score_multiply += actor.get_rollmod(rollmod_type_damage);
+			break;
+		case ability_type_magic:
+			bonus_actor = actor.get_rollmod(rollmod_type_magic);
+			break;
+		case ability_type_buff:
+			bonus_actor = actor.get_rollmod(rollmod_type_magic);
+			break;
+		default:
+			fprintf( stderr
+					,"roll_ability_result_by_ref cannot handle ability_type %d"
+					,ref_ability.type );
+			break;
+	}
+	return ref_ability.make_roll_result(
+			 (bonus_actor - bonus_target)
+			,score_multiply);
+}
+
+
+AbilityResult
+CombatEntity::roll_ability_id(
+		 size_t const abilit_id
+		,const CombatEntity &target
+		) const {
+	AbilityResult result
+		= roll_ability_result_by_ref(
+				ref_avail_id( abilit_id )
+				, (*this) /* `this` is a pointer! not a reference. I had big problem moment because of that fact */
+				, target );
+	return result;
+}
 
 void
 CombatEntity::calculate_equipment_bonuses(void) {
@@ -1358,6 +1452,9 @@ calculate_ability_use(
 
 void
 CombatEntity::fprint(FILE * f) const {
+	if( !is_alive ) {
+		fprintf( f , "DEAD " );
+	}
 	fprint_hp(f);
 	fprintf( f , "STR %d , DEX %d , WIS %d ;"
 			,get_stat(stat_type_strength)
@@ -1367,6 +1464,15 @@ CombatEntity::fprint(FILE * f) const {
 	fprint_nonzero_counters(f);
 }
 
+void
+CombatEntity::fprint_avail_abilities(FILE * f) const {
+	size_t n = 0;
+	for( const auto &a : avail ) {
+		fprintf(f , "0x%zx %zd  " , n , n);
+		a.fprint(f);
+		fprintf(f , "\n");
+	}
+}
 
 void
 CombatEntity::fprint_nonzero_counters(FILE * f)  const {
@@ -1844,19 +1950,6 @@ jump_end:
 
 
 
-void fprint_vector_of_combat_entities(
-		 FILE * f
-		,std::vector< CombatEntity > const &ce
-		)
-{
-	size_t n = 0;
-	for( auto const & pw : ce ) {
-		fprintf( f , "0x%02zx " , n );
-		pw.fprint(f);
-		fprintf( f , "\n" );
-		++n;
-	}
-}
 
 
 void
@@ -1865,7 +1958,6 @@ fprint_vector_of_combat_entities(
 		,std::vector< CombatEntity > &vec_ce
 		)
 {
-	fprintf( f , "\n" );
 	size_t n = 0;
 	for( auto const &ce : vec_ce ) {
 		fprintf( f , "%zu %zx"
@@ -1936,35 +2028,48 @@ void fight_versus_vectors(
 		fprintf( f , "cannot start fight with 0 enemy_warriors\n" );
 		return;
 	}
-	fprintf( f , "player warriors %zu:\n" , player_warriors.size());
-	fprint_vector_of_combat_entities(f , player_warriors);
-	fprintf( f , "enemy warriors %zu:\n" , enemy_warriors.size() );
-	fprint_vector_of_combat_entities(f , enemy_warriors);
 
 	int round = 0;
 	for( ; round < ROUND_COUNT ; ++round ) {
+		fprintf( f , "\n\n        round %d\n" , round );
+		fprintf( f , "    player warriors %zu:\n" , player_warriors.size());
+		fprint_vector_of_combat_entities(f , player_warriors);
+		fprintf( f , "    enemy warriors %zu:\n" , enemy_warriors.size() );
+		fprint_vector_of_combat_entities(f , enemy_warriors);
 		auto player_warrior = player_warriors.at(0);
-		player_warrior.fprint_available_abilities(f);
-		SelectionResult sel0 = SelectionResult();
-		sel0.fprint(f);
+		//player_warrior.fprint_available_abilities(f);
+		fprintf( f , "    available abilities:\n");
+		player_warrior.fprint_avail_abilities(f);
+		SelectionResult const sel_ability = SelectionResult();
+		sel_ability.fprint(f);
 		fprintf( f, "\n" );
-		int const selection_ability = sel0.get_integer();
+		int const selection_ability = sel_ability.get_integer();
 		if( selection_ability < 0 ) {
 			fprintf( f, "exiting, since you selected %d\n" , selection_ability );
 			goto jump_end;
 		}
-		if( player_warrior.arr_is_ability_available[selection_ability] ) {
-			fprintf( f , "\n" );
-			TABLE_ABILITIES[selection_ability].fprint(f);
-			fprintf( f , "\n" );
-		} else {
-			fprintf( f, "unavailable ability with id %d\n" , selection_ability );
+		size_t sel_id = (size_t)selection_ability;
+		const Ability &selected_ability_player
+			= player_warrior.ref_avail_id((size_t)sel_id);
+		fprintf( f , "you selected: " );
+		selected_ability_player.fprint(f);
+		fprintf( f , "\n" );
+		CombatEntity &target = enemy_warriors.back();
+		AbilityResult const result
+			= player_warrior.roll_ability_id(
+					 sel_id
+					,target );
+		result.fprint( f );
+		target.apply_ability_result( result );
+
+
+
+		for( auto &e : enemy_warriors ) {
+			e.perform_post_round_calculations();
 		}
-		/* int const target_selection */
-		/* 	= select_fprint_vector_of_combat_entities( */
-		/* 		FILE * f */
-		/* 		,std::vector< CombatEntity > &vec_ce */
-		/* 		); */
+		for( auto &p : player_warriors ) {
+			p.perform_post_round_calculations();
+		}
 	}
 
 
@@ -1983,7 +2088,7 @@ perform_example_combat(FILE * f)
 	CHECK_TABLE_ABILITY();
 	CHECK_TABLE_ITEM_BASE();
 	printf( "\n\n" );
-	fprint_table_item_base_name_only(f);
+	/* fprint_table_item_base_name_only(f); */
 
 
 	PlayerEntity player;

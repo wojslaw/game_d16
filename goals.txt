@@ -56,3 +56,19 @@ all calculations will be stored in one place. my premature_optimization instinct
 
 Area mechanics:
 1. "vile aura" all characters in the area are subject every round to poison-dealing effect. This would be for example an ability that is rolled each round on all entities, with stats {add -8 , m  1, counter_type_poison}. This means, that an entity without any poison resistance will be subject to a lot of poison damage. And of course - the entities that are the "natural inhabitants" will have poison resistance at least 8, so that they don't get the ambient damage
+
+
+Interface(key mapping / key binding):
+1. Each ability should have a keycode or a string of keycodes that it can be referred with. This will be helpful with the other idea: the player has a set number of slots for abilities(like in Darkest Dungeon, similar to DnD spell slots). For now, I will skip the concept of "leveled slots"(a la DnD), and it will just be a set number of slots period(a la Darkest Dungeon)
+2. All available targets could have keycodes associated with them, for example ala vim-style webbrowsers. This would be epic, since I want the game to preferably be keyboard-only, that is: keyboard-only is supposed to be The Best Way To Play, but mouse will be allowed too.
+
+
+
+How to multiplayer:
+1. The player gets sent only the area around him. For example like 10 in each direction
+2. I have the same idea for easily translating turn-based into realtime: the turns go automatically, for example, every 2 seconds. This value could be changed:
+2.1. per-game basis: shorter turns mean faster gameplay, potentially harder difficulty, since players have less time for decision.
+2.2. dynamically, depending on the computational load(a la Eve Online). When there is a whole lot happening around, the 
+3. Each turn, the player moves a set amount of tiles, and can do 1 action. All those actions are queued, and executed at the end of the turn.
+4. At the end of turn, all CombatEntity objects get subjected to perform_post_round_calculation(), which handles the actions, counters, re-calculates stats when needed, etc etc.
+
