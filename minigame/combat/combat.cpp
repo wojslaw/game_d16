@@ -1125,8 +1125,8 @@ struct CombatEntity {
 	std::vector< AvailableAbility > avail = {
 		AvailableAbility( 0 )
 	};
-	void fprint_avail_abilities(FILE * f) const;
-	const Ability& ref_avail_id(size_t const id) const {
+	void fprint_available_abilities(FILE * f) const;
+	const Ability& ref_available_id(size_t const id) const {
 		assert( id < avail.size() );
 		return avail.at(id).ref;
 	}
@@ -1228,7 +1228,7 @@ CombatEntity::roll_ability_id(
 		) const {
 	AbilityResult result
 		= roll_ability_result_by_ref(
-				ref_avail_id( abilit_id )
+				ref_available_id( abilit_id )
 				, (*this) /* `this` is a pointer! not a reference. I had big problem moment because of that fact */
 				, target );
 	return result;
@@ -1442,7 +1442,7 @@ CombatEntity::fprint(FILE * f) const {
 }
 
 void
-CombatEntity::fprint_avail_abilities(FILE * f) const {
+CombatEntity::fprint_available_abilities(FILE * f) const {
 	size_t n = 0;
 	for( const auto &a : avail ) {
 		fprintf(f , "0x%zx %zd  " , n , n);
@@ -1918,7 +1918,7 @@ void fight_versus_vectors(
 		auto player_warrior = player_warriors.at(0);
 		/* player ability */
 		fprintf( f , "    available abilities:\n");
-		player_warrior.fprint_avail_abilities(f);
+		player_warrior.fprint_available_abilities(f);
 		SelectionResult const sel_ability = SelectionResult();
 		sel_ability.fprint(f);
 		fprintf( f, "\n" );
@@ -1930,7 +1930,7 @@ void fight_versus_vectors(
 			}
 			size_t sel_id = (size_t)selection_ability;
 			const Ability &selected_ability_player
-				= player_warrior.ref_avail_id((size_t)sel_id);
+				= player_warrior.ref_available_id((size_t)sel_id);
 			fprintf( f , "you selected: %zu " , sel_id );
 			selected_ability_player.fprint(f);
 			fprintf( f , "\n" );
@@ -1952,7 +1952,7 @@ void fight_versus_vectors(
 			fprintf( f , "enemy selected: %d" , selection_ability);
 			size_t sel_id = (size_t)selection_ability;
 			const Ability &selected_ability_enemy
-				= current_warrior.ref_avail_id((size_t)sel_id);
+				= current_warrior.ref_available_id((size_t)sel_id);
 			selected_ability_enemy.fprint(f);
 			fprintf( f , "\n" );
 			AbilityResult const result
@@ -2043,7 +2043,7 @@ minigame_combat( FILE * f ) {
 	printf( "\nstarting minigame_combat\n" );
 
 	PlayerEntity player;
-	struct CombatEntity &you = player.vector_warriors.at(0);;
+	struct CombatEntity &you = player.vector_warriors.at(0);
 	ItemEntity item_0 = ItemEntity(
 			  4
 			,+1
@@ -2074,7 +2074,7 @@ minigame_combat( FILE * f ) {
 			fprintf( f , "    your character:\n" );
 			you.fprint(f);
 			fprintf( f , "\n  available abilities:\n" );
-			you.fprint_avail_abilities(f);
+			you.fprint_available_abilities(f);
 			break;
 		case 1:
 			fight_against_one_enemy( f , player.vector_warriors );
@@ -2082,6 +2082,6 @@ minigame_combat( FILE * f ) {
 		default:
 			fprintf(f , "unimplemented %d" , selection_main_menu);
 	};
-
-
 }
+
+
