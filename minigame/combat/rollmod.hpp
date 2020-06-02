@@ -33,3 +33,8 @@ void
 fprint_rollmod_array(
 		 FILE * f
 		,const int (&arr)[ROLLMOD_TYPE_COUNT]);
+
+void
+fprint_rollmod_array_only_nonzero(
+		 FILE * f
+		,const int (&arr)[ROLLMOD_TYPE_COUNT]);

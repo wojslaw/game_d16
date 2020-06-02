@@ -36,16 +36,13 @@ fprint_rollmod_array(
 		 FILE * f
 		,const int (&arr)[ROLLMOD_TYPE_COUNT]) {
 	size_t i = 0;
-	for( const auto &v : arr ) {
+	for( const int &v : arr ) {
 		if( v != 0 ) {
-			
+			fprintf( f , "%s %d"
+					, STRINGTABLE_ROLLMOD_SHORTNAME[i]
+					, v);
 		}
-		fprintf( f , "%s %d"
-				, STRINGTABLE_ROLLMOD_SHORTNAME[i]
-				, v);
 		++i;
 	}
 }
-
-
 

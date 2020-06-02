@@ -649,12 +649,9 @@ ItemBase::fprint( FILE * f
 			, required_stat[stat_type_dexterity]
 			, required_stat[stat_type_wisdom] );
 	/* weapon */
-	fprintf( f , "rng %d dmg %d th %d "
-			, range
-			, rollmod[rollmod_type_damage]
-			, rollmod[rollmod_type_to_hit] );
+	fprint_rollmod_array(f , rollmod);
 	if( name ) {
-		fprintf( f , "%s}", name );
+		fprintf( f , "  %s}", name );
 	}
 }
 
@@ -722,7 +719,7 @@ struct ItemEntity {
 
 void
 ItemEntity::fprint(FILE * f) const {
-	fprintf( f , "{q %d,d %d/%d,base[0x%lx]:"
+	fprintf( f , "{q %+d,d %d/%d,base[0x%lx]:"
 			,stat[itemstat_quality]
 			,stat[itemstat_durability_max]
 			,stat[itemstat_durability_current]
