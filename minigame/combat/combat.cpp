@@ -1122,8 +1122,6 @@ struct CombatEntity {
 	
 	std::array<int , ROLLMOD_TYPE_COUNT >
 		equipment_rollmod;
-	std::array<bool , ABILITIES_COUNT >  /* hmm - just noticed, that it will be slightly more difficult to program rudimentary AI(i will need to implement probability_weight for abilities anyway). for now, the AI will only have 1 ability */
-		arr_is_ability_available = {{ true, false }};
 	std::vector< AvailableAbility > avail = {
 		AvailableAbility( 0 )
 	};
@@ -1134,15 +1132,6 @@ struct CombatEntity {
 	}
 
 	EquippedItem equipped;
-
-
-	VectorAbilityPointers vector_available_abilities = VECTOR_ABILITY_POINTERS_DEFAULT;
-	std::vector< const char * >
-		vector_available_abilities_strings
-		= vector_ability_pointer_get_vector_of_strings(
-				vector_available_abilities );
-	Ability * ptr_available_ability( int const id ) const;
-
 
 
 	//methods
@@ -1157,14 +1146,6 @@ struct CombatEntity {
 		return equipped[slot_type].is_none();
 	}
 
-	bool is_ability_available( size_t const ability_id ) const {
-		if(ability_id >= ABILITY_COUNT) {
-			return false;
-		}
-		return arr_is_ability_available.at(ability_id);
-	}
-	std::vector<const char * >
-		generate_vector_of_available_ability_names(void) const;
 
 
 	int get_counter_value(enum counter_type ct) const;
@@ -1195,7 +1176,6 @@ struct CombatEntity {
 	}
 	void fprint_rollmods_equipped( FILE * f ) const;
 	void fprint_rollmods_equipped_only_nonzero( FILE * f ) const ;
-	void fprint_available_abilities(FILE * f) const; /* TODO delete this */
 
 	void calculate_equipment_bonuses(void);
 
@@ -1426,15 +1406,6 @@ RollResult roll_attack(
 }
 
 
-Ability *
-CombatEntity::ptr_available_ability(
-		int const id
-		) const {
-	assert( id >= 0 );
-	assert( id < (int)vector_available_abilities.size() );
-	Ability * ref = vector_available_abilities[id];
-	return ref;
-}
 
 
 /*struct EffectToApply {
@@ -1533,20 +1504,6 @@ CombatEntity::fprint_rollmods_equipped( FILE * f ) const {
 }
 
 
-void
-CombatEntity::fprint_available_abilities(
-		FILE * f
-		) const {
-	size_t id = 0;
-	for( auto const is_avail : arr_is_ability_available ) {
-		if( is_avail ) {
-			fprintf( f , "0x%zx %zu" , id , id);
-			TABLE_ABILITIES[id].fprint(f);
-			++id;
-			fprintf( f , "\n");
-		}
-	}
-}
 
 
 void
@@ -1738,21 +1695,6 @@ CombatEntity::perform_post_round_calculations(void) {
 }
 
 
-std::vector<const char * >
-CombatEntity::generate_vector_of_available_ability_names(void) const{
-	/* this is defs inneficient in terms of computing power, */
-	/* but incredibly easy to understand */
-	std::vector<const char * > vec_names;
-	vec_names.reserve(ABILITIES_COUNT);
-	size_t id = 0;
-	for( auto const b : arr_is_ability_available ) {
-		if( b ) {
-			vec_names.push_back( TABLE_ABILITIES[id].name );
-		}
-		++id;
-	}
-	return vec_names;
-}
 
 
 
@@ -1883,92 +1825,6 @@ PlayerEntity::PlayerEntity() {
 }
 
 
-
-
-void fight_versus_opponent(
-		 FILE * f
-		,CombatEntity &you
-		,CombatEntity &foe
-		)
-{
-	fprintf( f , "you: " );
-	you.fprint(f);
-	fprintf( f , "\n" );
-	fprintf( f , "foe: " );
-	foe.fprint(f);
-	fprintf( f , "\n" );
-
-	int round = 0;
-	for( ; round < ROUND_COUNT ; ++round ) {
-		fprintf(f , "  round %d\n" , round);
-		auto const vector_available_ability_names
-			=  you.generate_vector_of_available_ability_names();
-		int selection = select_fprint_vector_of_strings(
-				 stdout
-				,vector_available_ability_names ); //TODO
-		if( selection < 0 || selection >= (int)vector_available_ability_names.size() ) { // I'm (probably unneccesarily) afraid of casting here
-			fprintf( f , "aborting, since you selected %d\n" , selection);
-			goto jump_end;
-		}
-		fprintf( f, "you(%d):" , selection);
-		const auto you_ability = you.ptr_available_ability(selection);
-		const AbilityResult you_ability_result
-			= roll_ability_result(
-					 you_ability
-					,you
-					,foe );
-		you_ability_result.fprint( f );
-		fprintf( f , "\n" );
-		fprintf( f, "foe(%d):" , 0 );
-		const auto foe_ability = foe.ptr_available_ability(0); /* ability[0] so only basic attack */
-		const AbilityResult foe_ability_result
-			= roll_ability_result(
-					 foe_ability
-					,foe
-					,you );
-		foe_ability_result.fprint( f );
-		fprintf( f , "\n" );
-		auto you_targeted_entity = get_target_of_ability(
-				 you
-				,foe
-				,you_ability);
-		auto foe_targeted_entity = get_target_of_ability(
-				 foe
-				,you
-				,foe_ability);
-		apply_result_in_combat(
-				 you_targeted_entity
-				,you_ability_result );
-		apply_result_in_combat(
-				 foe_targeted_entity
-				,foe_ability_result );
-		you.post_round(f);
-		foe.post_round(f);
-		fprintf( f , "you: " );
-		you.fprint(f);
-		fprintf( f , "\n" );
-		fprintf( f , "foe: " );
-		foe.fprint(f);
-		fprintf( f , "\n" );
-		if( !(you.is_alive) ) {
-			fprintf( f , "you died\n" );
-			break;
-		}
-		if( !(foe.is_alive) ) {
-			fprintf( f , "foe died\n" );
-			break;
-		}
-	}
-jump_end:
-	fprintf( f, "  Combat ended after %d rounds. Results:\n" , round );
-	fprintf( f , "you: " );
-	you.fprint(f);
-	fprintf( f , "\n" );
-	fprintf( f , "foe: " );
-	foe.fprint(f);
-	fprintf( f , "\n" );
-	
-}
 
 
 
@@ -2106,7 +1962,6 @@ void fight_versus_vectors(
 			result.fprint( f );
 			fprintf( f , "\n" );
 			target.apply_ability_result( result );
-			target.apply_ability_result( result );
 		}
 
 
@@ -2176,52 +2031,6 @@ fight_against_one_enemy(
 
 
 
-void
-perform_example_combat(FILE * f)
-{
-	CHECK_TABLE_ABILITY();
-	CHECK_TABLE_ITEM_BASE();
-	printf( "\n\n" );
-	/* fprint_table_item_base_name_only(f); */
-
-
-	PlayerEntity player;
-	//print_table_ability(f);
-	struct CombatEntity &you = player.vector_warriors.at(0);;
-	ItemEntity item_0 = ItemEntity(
-			  4
-			,+1
-			, 0
-			);
-	ItemEntity item_1 = ItemEntity(
-			  6
-			,+2
-			, 0
-			);
-	you.equip( f , item_0 );
-	you.equip( f , item_1 );
-	you.fprint_equipped(f);
-	you.calculate_equipment_bonuses();
-	fprintf( f , "\n" );
-	you.fprint_rollmods_equipped_only_nonzero(f);
-	you.stat[stat_type_strength] =  2;
-	you.stat[stat_type_dexterity] = 4;
-	you.stat[stat_type_wisdom] = 2;
-	std::vector<CombatEntity>enemy_warriors = {
-		 generate_enemy_of_level(2)
-		,generate_enemy_of_level(2)
-	};
-
-
-
-	fight_versus_vectors(
-			f
-			,player.vector_warriors
-			,enemy_warriors
-			);
-
-
-}
 
 
 
