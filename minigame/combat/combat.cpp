@@ -136,53 +136,6 @@ struct MonsterType {
 };
 
 
-// maybe it isn't a good idea to put in those "base stats" for monster types?
-// I'm thinking about whether I want to balance it around different monster_type having differing levels of difficulty?
-// Or maybe! The "base stats" will be more of a "focus" of each monster_type
-// one monster_type would be low-health, high def? other would be low hp/def, but high attack?
-// and other would be more "human like" in that they are well-rounded
-// and only specific monster_base in a given monster_type would be even further specialized.
-// but I still have a feeling this is a stupid idea, and that it will be overall more sensible to define stats for each monster_type, without shadowing that by 
-// because I don't exactly want to feel stuck in having to think about both the monster_type and monster_base stats
-// but still, it sounds like a mildly interesting idea, to think of it kinda like species
-// There could also be something kinda like Diablo, in that there are so-called difficulty levels, which just mean the monsters get higher stats there.
-
-std::array<const MonsterType , MONSTER_TYPE_COUNT>
-TABLE_MONSTER_TYPE = {{
-	[monster_type_none] = {
-		.description = "None"
-	},
-	[monster_type_devil] = {
-		.description = "Devil"
-	},
-	[monster_type_blob] = {
-		.description = "Blob"
-	},
-	[monster_type_porkish] = {
-		.base_hp_max  = 2 ,
-		.base_damage  = 2 ,
-		.base_attack  = 0 ,
-		.base_defense = 4 ,
-		.description = "Porkish"
-	},
-	[monster_type_mootant] = {
-		.description = "Mootant"
-	},
-	[monster_type_undead] = {
-		.base_hp_max  = 0 ,
-		.base_damage  = 2 ,
-		.base_attack  = 2 ,
-		.base_defense = 4 ,
-		.description  = "Undead"
-	},
-	[monster_type_vermin] = {
-		.base_hp_max  = 0 ,
-		.base_damage  = 2 ,
-		.base_attack  = 0 ,
-		.base_defense = 4 ,
-		.description  = "Vermin" ,
-	},
-}};
 
 
 
