@@ -10,6 +10,8 @@
 #include "stattype.hpp"
 
 
+void
+minigame_combat(FILE * f);
 
 void
 perform_example_combat(FILE * f);

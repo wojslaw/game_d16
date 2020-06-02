@@ -1,5 +1,11 @@
 Make a separate "demo_game(.cpp|.h)", where there will be a simple gathering/training skills textgame.
 
+1. multiple abilities to choose from
+2. inventory
+3. equip/unequip
+
+1. data persistence: savefile, saving and loading the game
+
 
 
 
@@ -72,3 +78,30 @@ How to multiplayer:
 3. Each turn, the player moves a set amount of tiles, and can do 1 action. All those actions are queued, and executed at the end of the turn.
 4. At the end of turn, all CombatEntity objects get subjected to perform_post_round_calculation(), which handles the actions, counters, re-calculates stats when needed, etc etc.
 
+
+Rollmods:
+STR
+	Force ( + Might , - Weakness )
+	Resilience ( + perseverence, - )
+But maybe that's just stupid, iwll
+
+DEX
+	Speed
+	Control
+I wanted here to have "slowness" and "clumsiness", but maybe that's bad
+
+WIS
+	 (+ Clarity , - )
+	Will
+	Magic
+
+Again: this might just be a bad idea. Doesn't add much to gameplay.
+
+
+I was thinking about those countertypes:
+WIS + Clarity
+WIS + Focus
+WIS - Unfocus
+WIS - Dim Mind
+DEX + Quickness
+DEX - Slowness

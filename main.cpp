@@ -110,7 +110,7 @@ int main(int argc, char * argv[]) {
 					);
 			break;
 		case minigame_type_combat:
-			perform_example_combat(stdout);
+			minigame_combat(stdout);
 			break;
 		default:
 			fprintf(stderr , "unrecognized minigame type:%d\n" , minigame_type);

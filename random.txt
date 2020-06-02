@@ -1,0 +1,7 @@
+I wanted to pass gcc flag `-Wpedantic`, but it warns about a lot of useful stuff form GNU++, such as initializing in arrays with
+
+```C++
+int arr[] = {
+	[thingie] = 1 ,
+}
+```

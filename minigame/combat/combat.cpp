@@ -1101,7 +1101,9 @@ AvailableAbility::fprint(FILE * f) const {
 
 
 struct CombatEntity {
-	bool is_alive = true;
+	bool is_alive = true; /* I wanna put those bools also into an array with a stringtable */
+	bool was_saved_by_resolve = false;
+	bool is_just_died = false;
 	std::array< int , COUNTER_TYPE_COUNT > counter = {0};
 	std::array< int , STAT_TYPE_COUNT > max_stat = {{
 		[stat_type_none] = 0 ,
@@ -1145,7 +1147,6 @@ struct CombatEntity {
 
 	//methods
 	void fprint(FILE * f) const;
-	void fprint_long(FILE * f) const;
 	void fprint_hp(FILE * f) const;
 	void fprint_all_counters(FILE * f) const;
 	void fprint_nonzero_counters(FILE * f) const;
@@ -1177,6 +1178,11 @@ struct CombatEntity {
 	void apply_ability_result( const AbilityResult &ability_result );
 
 	void perform_post_round_calculations(void);
+	void fprint_post_round_info(FILE * f);
+	void post_round(FILE * f) {
+		perform_post_round_calculations();
+		fprint_post_round_info(f);
+	}
 
 	bool equip(
 			/* return true on success */
@@ -1189,7 +1195,7 @@ struct CombatEntity {
 	}
 	void fprint_rollmods_equipped( FILE * f ) const;
 	void fprint_rollmods_equipped_only_nonzero( FILE * f ) const ;
-	void fprint_available_abilities(FILE * f) const;
+	void fprint_available_abilities(FILE * f) const; /* TODO delete this */
 
 	void calculate_equipment_bonuses(void);
 
@@ -1455,12 +1461,12 @@ CombatEntity::fprint(FILE * f) const {
 	if( !is_alive ) {
 		fprintf( f , "DEAD " );
 	}
-	fprint_hp(f);
 	fprintf( f , "STR %d , DEX %d , WIS %d ;"
 			,get_stat(stat_type_strength)
 			,get_stat(stat_type_dexterity)
 			,get_stat(stat_type_wisdom)
 			);
+	fprint_hp(f);
 	fprint_nonzero_counters(f);
 }
 
@@ -1663,6 +1669,19 @@ int CombatEntity::get_counter_value(enum counter_type ct) const {
 }
 
 
+
+void
+CombatEntity::fprint_post_round_info(FILE * f) {
+	if( is_just_died ) {
+		fprintf( f , " just died " );
+		is_just_died = false;
+	}
+	if( was_saved_by_resolve ) {
+		fprintf( f , " saved by resolve " );
+		was_saved_by_resolve = false;
+	}
+}
+
 void
 CombatEntity::perform_post_round_calculations(void) {
 	/* idea that will make for an interesting mechanic: at the end of each round, all rollmods and counters and stats will be recalculated for each entity */
@@ -1700,14 +1719,17 @@ CombatEntity::perform_post_round_calculations(void) {
 
 	if( cur_damage > max_damage ) {
 		is_alive = false;
+		is_just_died = true;
 		if( resolve > 0 ) {
-			printf( "resolve saved (dmg %d , res %d)\n"
-					, cur_damage
-					, resolve );
+			/* printf( "resolve saved (dmg %d , res %d)\n" */
+			/* 		, cur_damage */
+			/* 		, resolve ); */
 			 --(counter[counter_type_resolve]);
 			is_alive = true;
+			is_just_died = false;
+			was_saved_by_resolve = true;
 		} else {
-			printf( "killed! %d  %d" , cur_damage , resolve );
+			/* printf( "killed! %d  %d" , cur_damage , resolve ); */
 		}
 	}
 
@@ -1920,8 +1942,8 @@ void fight_versus_opponent(
 		apply_result_in_combat(
 				 foe_targeted_entity
 				,foe_ability_result );
-		you.perform_post_round_calculations();
-		foe.perform_post_round_calculations();
+		you.post_round(f);
+		foe.post_round(f);
 		fprintf( f , "you: " );
 		you.fprint(f);
 		fprintf( f , "\n" );
@@ -1960,7 +1982,7 @@ fprint_vector_of_combat_entities(
 {
 	size_t n = 0;
 	for( auto const &ce : vec_ce ) {
-		fprintf( f , "%zu %zx"
+		fprintf( f , "0x%zx %zu  "
 				, n
 				, n );
 		ce.fprint(f);
@@ -2028,56 +2050,128 @@ void fight_versus_vectors(
 		fprintf( f , "cannot start fight with 0 enemy_warriors\n" );
 		return;
 	}
+	assert( enemy_warriors.size() == 1 ); /* only 1 enemy supported for now */
 
 	int round = 0;
 	for( ; round < ROUND_COUNT ; ++round ) {
-		fprintf( f , "\n\n        round %d\n" , round );
+		fprintf( f , "\n\n\n        round %d\n" , round );
 		fprintf( f , "    player warriors %zu:\n" , player_warriors.size());
 		fprint_vector_of_combat_entities(f , player_warriors);
 		fprintf( f , "    enemy warriors %zu:\n" , enemy_warriors.size() );
 		fprint_vector_of_combat_entities(f , enemy_warriors);
 		auto player_warrior = player_warriors.at(0);
-		//player_warrior.fprint_available_abilities(f);
+		/* player ability */
 		fprintf( f , "    available abilities:\n");
 		player_warrior.fprint_avail_abilities(f);
 		SelectionResult const sel_ability = SelectionResult();
 		sel_ability.fprint(f);
 		fprintf( f, "\n" );
-		int const selection_ability = sel_ability.get_integer();
-		if( selection_ability < 0 ) {
-			fprintf( f, "exiting, since you selected %d\n" , selection_ability );
-			goto jump_end;
+		{ /* player ability */
+			int const selection_ability = sel_ability.get_integer();
+			if( selection_ability < 0 ) {
+				fprintf( f, "exiting, since you selected %d\n" , selection_ability );
+				goto jump_end;
+			}
+			size_t sel_id = (size_t)selection_ability;
+			const Ability &selected_ability_player
+				= player_warrior.ref_avail_id((size_t)sel_id);
+			fprintf( f , "you selected: %zu " , sel_id );
+			selected_ability_player.fprint(f);
+			fprintf( f , "\n" );
+			CombatEntity &target = enemy_warriors.back();
+			AbilityResult const result
+				= player_warrior.roll_ability_id(
+						sel_id
+						,target );
+			result.fprint( f );
+			fprintf( f , "\n" );
+			target.apply_ability_result( result );
 		}
-		size_t sel_id = (size_t)selection_ability;
-		const Ability &selected_ability_player
-			= player_warrior.ref_avail_id((size_t)sel_id);
-		fprintf( f , "you selected: " );
-		selected_ability_player.fprint(f);
-		fprintf( f , "\n" );
-		CombatEntity &target = enemy_warriors.back();
-		AbilityResult const result
-			= player_warrior.roll_ability_id(
-					 sel_id
-					,target );
-		result.fprint( f );
-		target.apply_ability_result( result );
+
+		{ /* enemy ability */
+			auto &current_warrior = enemy_warriors.at(0);
+			CombatEntity &target = player_warriors.back();
+			int const count_available = current_warrior.avail.size();
+			int const selection_ability = rand() % count_available;
+			fprintf( f , "enemy selected: %d" , selection_ability);
+			size_t sel_id = (size_t)selection_ability;
+			const Ability &selected_ability_enemy
+				= current_warrior.ref_avail_id((size_t)sel_id);
+			selected_ability_enemy.fprint(f);
+			fprintf( f , "\n" );
+			AbilityResult const result
+				= current_warrior.roll_ability_id(
+						sel_id
+						,target );
+			result.fprint( f );
+			fprintf( f , "\n" );
+			target.apply_ability_result( result );
+			target.apply_ability_result( result );
+		}
 
 
-
+		fprintf( f , "\n\n  (ending round %d)\n" , round );
+		fprintf( f , "(enemy" );
 		for( auto &e : enemy_warriors ) {
-			e.perform_post_round_calculations();
+			e.post_round(f);
 		}
+		fprintf( f , ")\n" );
+		fprintf( f , "(you" );
 		for( auto &p : player_warriors ) {
-			p.perform_post_round_calculations();
+			p.post_round(f);
+		}
+		fprintf( f , ")\n" );
+		/* conditions for game ending */
+		bool is_enemy_alive = false;
+		bool is_player_alive = false;
+		bool is_finished = false;
+		for( auto &e : enemy_warriors ) {
+			if( e.is_alive ) {
+				is_enemy_alive = true;
+			}
+		}
+		for( auto &e : player_warriors ) {
+			if( e.is_alive ) {
+				is_player_alive = true;
+			}
+		}
+		if( !is_enemy_alive ) {
+			fprintf( f , "(enemy lost)" );
+			is_finished = true;
+		}
+		if( !is_player_alive ) {
+			fprintf( f , "(player lost)" );
+			is_finished = true;
+		}
+		if( is_finished ) {
+			fprintf( f , "ending combat\n" );
+			goto jump_end;
 		}
 	}
 
 
 jump_end:
+	fprintf( f , "Fight ended after %d rounds\n" , round );
 	return;
 }
 
 
+
+void
+fight_against_one_enemy(
+		 FILE * f
+		,std::vector<CombatEntity> &player_warriors ) {
+	std::vector< CombatEntity >
+		enemy_warriors
+		= {
+			CombatEntity()
+		};
+	fight_versus_vectors(
+			f
+			,player_warriors
+			,enemy_warriors
+			);
+}
 
 
 
@@ -2130,3 +2224,55 @@ perform_example_combat(FILE * f)
 }
 
 
+
+
+void
+minigame_combat( FILE * f ) {
+	CHECK_TABLE_ABILITY();
+	CHECK_TABLE_ITEM_BASE();
+
+	printf( "\nstarting minigame_combat\n" );
+
+	PlayerEntity player;
+	struct CombatEntity &you = player.vector_warriors.at(0);;
+	ItemEntity item_0 = ItemEntity(
+			  4
+			,+1
+			, 0
+			);
+	ItemEntity item_1 = ItemEntity(
+			  6
+			,+2
+			, 0
+			);
+	you.equip( f , item_0 );
+	you.equip( f , item_1 );
+	you.fprint_equipped(f);
+	you.calculate_equipment_bonuses();
+
+	std::vector< const char * > vec_selections_main_menu = {
+		/* 0 */ "print character info" ,
+		/* 1 */ "fight against 1 enemy" ,
+		/* 2 */ "(todo) " ,
+	};
+
+	int selection_main_menu
+		= select_fprint_vector_of_strings(
+			f , vec_selections_main_menu);
+
+	switch(selection_main_menu) {
+		case 0:
+			fprintf( f , "    your character:\n" );
+			you.fprint(f);
+			fprintf( f , "\n  available abilities:\n" );
+			you.fprint_avail_abilities(f);
+			break;
+		case 1:
+			fight_against_one_enemy( f , player.vector_warriors );
+			break;
+		default:
+			fprintf(f , "unimplemented %d" , selection_main_menu);
+	};
+
+
+}

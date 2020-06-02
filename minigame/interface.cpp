@@ -81,7 +81,5 @@ select_fprint_vector_of_strings(
 			,vector_strings
 			);
 	fprintf( f , "input selection:\n" ); // TODO: better system for handling selections
-	int selection = -1;
-	scanf( "%i" , &selection );
 	return get_selection_number();
 }
