@@ -1122,13 +1122,15 @@ struct CombatEntity {
 	
 	std::array<int , ROLLMOD_TYPE_COUNT >
 		equipment_rollmod;
-	std::vector< AvailableAbility > avail = {
-		AvailableAbility( 0 )
+	std::vector< AvailableAbility > available_ability_vector = {
+		AvailableAbility( 0 ) ,
+		AvailableAbility( 1 ) ,
+		AvailableAbility( 2 ) ,
 	};
 	void fprint_available_abilities(FILE * f) const;
 	const Ability& ref_available_id(size_t const id) const {
-		assert( id < avail.size() );
-		return avail.at(id).ref;
+		assert( id < available_ability_vector.size() );
+		return available_ability_vector.at(id).ref;
 	}
 
 	EquippedItem equipped;
@@ -1444,10 +1446,11 @@ CombatEntity::fprint(FILE * f) const {
 void
 CombatEntity::fprint_available_abilities(FILE * f) const {
 	size_t n = 0;
-	for( const auto &a : avail ) {
+	for( const auto &a : available_ability_vector ) {
 		fprintf(f , "0x%zx %zd  " , n , n);
 		a.fprint(f);
 		fprintf(f , "\n");
+		++n;
 	}
 }
 
@@ -1845,7 +1848,7 @@ fprint_vector_of_combat_entities(
 		fprintf( f , "\n" );
 		++n;
 	}
-	if( n != vec_ce.size() ) { /* some paranoid coding here, Mr. Linux Torvalds wouldn't be happy at that kind of defensive coding */
+	if( n != vec_ce.size() ) { /* some paranoia here, Mr. GNU/Linux Torvalds wouldn't be happy at that kind of defensive coding */
 		fprintf( stderr ,  "BUG? in %s(): n != vec_ce.size()\n" , __func__ );
 	} 
 }
@@ -1947,9 +1950,13 @@ void fight_versus_vectors(
 		{ /* enemy ability */
 			auto &current_warrior = enemy_warriors.at(0);
 			CombatEntity &target = player_warriors.back();
-			int const count_available = current_warrior.avail.size();
-			int const selection_ability = rand() % count_available;
-			fprintf( f , "enemy selected: %d" , selection_ability);
+			int const count_available
+				= current_warrior.available_ability_vector.size();
+			int const selection_ability
+				= rand() % count_available;
+			fprintf( f
+					, "enemy selected: %d"
+					, selection_ability);
 			size_t sel_id = (size_t)selection_ability;
 			const Ability &selected_ability_enemy
 				= current_warrior.ref_available_id((size_t)sel_id);
@@ -2006,7 +2013,7 @@ void fight_versus_vectors(
 
 
 jump_end:
-	fprintf( f , "Fight ended after %d rounds\n" , round );
+	fprintf( f , "Fight ended after %d rounds(max rounds: %d)\n" , round , ROUND_COUNT );
 	return;
 }
 
@@ -2044,18 +2051,20 @@ minigame_combat( FILE * f ) {
 
 	PlayerEntity player;
 	struct CombatEntity &you = player.vector_warriors.at(0);
-	ItemEntity item_0 = ItemEntity(
-			  4
-			,+1
-			, 0
-			);
-	ItemEntity item_1 = ItemEntity(
-			  6
-			,+2
-			, 0
-			);
-	you.equip( f , item_0 );
-	you.equip( f , item_1 );
+	{
+		ItemEntity item_0 = ItemEntity(
+				  4
+				,+1
+				, 0
+				);
+		ItemEntity item_1 = ItemEntity(
+				  6
+				,+2
+				, 0
+				);
+		you.equip( f , item_0 );
+		you.equip( f , item_1 );
+	}
 	you.fprint_equipped(f);
 	you.calculate_equipment_bonuses();
 
