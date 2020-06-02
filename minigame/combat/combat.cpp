@@ -2001,6 +2001,9 @@ minigame_combat( FILE * f ) {
 
 	PlayerEntity player;
 	struct CombatEntity &you = player.vector_warriors.at(0);
+	++you.stat[stat_type_strength];
+	++you.stat[stat_type_dexterity];
+	++you.stat[stat_type_wisdom];
 	{
 		ItemEntity item_0 = ItemEntity(
 				  4
@@ -2021,7 +2024,7 @@ minigame_combat( FILE * f ) {
 	std::vector< const char * > vec_selections_main_menu = {
 		/* 0 */ "print character info" ,
 		/* 1 */ "fight against 1 enemy" ,
-		/* 2 */ "(todo) " ,
+		/* 2 */ "(todo) fight against 2 enemies" ,
 	};
 
 	int selection_main_menu
