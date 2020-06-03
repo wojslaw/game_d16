@@ -857,7 +857,7 @@ Ability TABLE_ABILITIES[] = {
 		.targeting_type = targeting_type_enemy ,
 		.rollmod_type = rollmod_type_attack ,
 		.rollmod_add = -4 ,
-		.rollmod_multiply = -2 ,
+		.rollmod_multiply = -1 ,
 		.range = 1
 	} ,
 	{
@@ -1113,7 +1113,11 @@ struct CombatEntity {
 	void perform_post_round_calculations(void);
 	void fprint_post_round_info(FILE * f);
 	void post_round(FILE * f) {
-		perform_post_round_calculations();
+		if( is_alive ) {
+			perform_post_round_calculations();
+		} else {
+			fprintf( f , "is dead" );
+		}
 		fprint_post_round_info(f);
 	}
 
@@ -1695,27 +1699,23 @@ apply_result_in_combat(
 };
 
 
-CombatEntity *
+CombatEntity &
 get_target_of_ability( /* TODO handle more entities than actor-enemy, but that will come only after I make a robust system for selection */
 		 CombatEntity &actor
 		,CombatEntity &enemy
-		,const Ability * chosen_ability
+		,const Ability & chosen_ability
 		) {
-	assert( chosen_ability );
-	CombatEntity * target;
-	switch(chosen_ability->targeting_type) {
+	switch(chosen_ability.targeting_type) {
 		case targeting_type_self:
-			target = &actor;
-			break;
+			return actor;
 		case targeting_type_enemy:
-			target = &enemy;
-			break;
+			return enemy;
 		default:
 			fprintf(  stderr
 					,"unexpected targeting_type=%d\n"
-					,chosen_ability->targeting_type );
+					,chosen_ability.targeting_type );
+			exit(EXIT_FAILURE);
 	}
-	return target;
 };
 
 
@@ -1764,10 +1764,15 @@ generate_enemy_of_level(
 
 struct PlayerEntity {
 	ArrayMaterials material = { 0 };
-	std::vector<CombatEntity> vector_warriors;
-
+	std::vector< CombatEntity > vector_warriors;
+	std::vector< CombatEntity * > vector_current_team;
 
 	PlayerEntity();
+
+	size_t get_count_warriors(void) const { return vector_warriors.size(); }
+	size_t get_count_team(void) const { return vector_current_team.size(); }
+	void assert_current_team_is_valid(void);
+
 };
 
 
@@ -1775,11 +1780,61 @@ PlayerEntity::PlayerEntity() {
 	CombatEntity first_warrior;
 	first_warrior.counter[counter_type_resolve] = 2;
 	vector_warriors.emplace_back(first_warrior);
+	vector_current_team.at(0) = &(vector_warriors.at(0));
+}
+
+void
+PlayerEntity::assert_current_team_is_valid(void) {
+	/* TODO: check for duplicate pointers */
+	/* TODO: check that each pointer in vector_current_team points to an entity in vector_warriors */
+	size_t const army_size = vector_warriors.size();
+	size_t const team_size = vector_current_team.size();
+	std::vector< bool > is_used_army_position = std::vector< bool >(army_size);
+	is_used_army_position = { 0 };
+	bool team_is_valid = true;
+	for( size_t i = 0 ;
+			i < team_size ;
+			++i ) {
+		const CombatEntity * ce = vector_current_team.at(i);
+		if( ce == NULL ) {
+			fprintf( stderr , "%s:null pointer at position %zu\n" , __func__ , i );
+			team_is_valid = false;
+		}
+		bool exists_in_army = false;
+		for( size_t a = 0 ;
+				a < army_size ;
+				++a ) {
+			const CombatEntity * army_ce = &(vector_warriors.at(a));
+			if( ce == army_ce ) {
+				if( is_used_army_position.at(a) ) {
+					fprintf( stderr , "%s:position %zu is a duplicate\n" , __func__ , i);
+					team_is_valid = false;
+				}
+				exists_in_army = true;
+				is_used_army_position.at(a) = true;
+			}
+		}
+		if( !exists_in_army ) {
+			fprintf( stderr , "%s:position %zu not in army\n" , __func__ , i );
+			team_is_valid = false;
+		}
+	}
+	assert( team_is_valid );
 }
 
 
-
-
+bool
+vector_combat_entity_is_anyone_alive(
+		const std::vector< CombatEntity > & vec
+		)
+{
+	for( auto & ce : vec ) {
+		if( ce.is_alive ) {
+			return true;
+		}
+	}
+	return false;
+}
 
 
 
@@ -1859,7 +1914,7 @@ void fight_versus_vectors(
 		fprintf( f , "cannot start fight with 0 enemy_warriors\n" );
 		return;
 	}
-	assert( enemy_warriors.size() == 1 ); /* only 1 enemy supported for now */
+	/* assert( enemy_warriors.size() == 1 ); /1* only 1 enemy supported for now *1/ */
 
 	int round = 0;
 	for( ; round < ROUND_COUNT ; ++round ) {
@@ -1868,14 +1923,15 @@ void fight_versus_vectors(
 		fprint_vector_of_combat_entities(f , player_warriors);
 		fprintf( f , "    enemy warriors %zu:\n" , enemy_warriors.size() );
 		fprint_vector_of_combat_entities(f , enemy_warriors);
-		auto player_warrior = player_warriors.at(0);
+		CombatEntity &player_warrior = player_warriors.at(0);
 		/* player ability */
-		fprintf( f , "    available abilities:\n");
-		player_warrior.fprint_available_abilities(f);
-		SelectionResult const sel_ability = SelectionResult();
-		sel_ability.fprint(f);
-		fprintf( f, "\n" );
 		{ /* player ability */
+			fprintf( f , "    available abilities:\n");
+			player_warrior.fprint_available_abilities(f);
+			fprintf( f , "input number: ");
+			SelectionResult const sel_ability = SelectionResult();
+			sel_ability.fprint(f);
+			fprintf( f, "\n" );
 			int const selection_ability = sel_ability.get_integer();
 			if( selection_ability < 0 ) {
 				fprintf( f, "exiting, since you selected %d\n" , selection_ability );
@@ -1887,45 +1943,73 @@ void fight_versus_vectors(
 			fprintf( f , "you selected: %zu " , sel_id );
 			selected_ability_player.fprint(f);
 			fprintf( f , "\n" );
-			CombatEntity &target = enemy_warriors.back();
+			const Ability & ref_ability = player_warrior.ref_available_id(sel_id);
+			fprintf( f , "    available targets:\n");
+			fprint_vector_of_combat_entities(f , enemy_warriors);
+			fprintf(f , "input number: " );
+			SelectionResult const sel_enemy = SelectionResult();
+			size_t sel_id_enemy = sel_enemy.get_integer();
+			CombatEntity & selected_ce = enemy_warriors.at(sel_id_enemy);
+			CombatEntity &target
+				= get_target_of_ability(
+						player_warrior
+						,selected_ce
+						,ref_ability);
 			AbilityResult const result
 				= player_warrior.roll_ability_id(
 						sel_id
 						,target );
 			result.fprint( f );
-			fprintf( f , "\n" );
 			target.apply_ability_result( result );
+			fprintf( f , "\n" );
 		}
 
-		{ /* enemy ability */
-			auto &current_warrior = enemy_warriors.at(0);
-			CombatEntity &target = player_warriors.back();
+		size_t number_enemy = 0;
+		for( auto & current_warrior : enemy_warriors ) { /* enemy team rounds */
+			fprintf( f
+					, "\n  enemy %zu;"
+					, number_enemy );
+			++number_enemy;
+			if( !(current_warrior.is_alive) ) {
+				fprintf( f , "  is dead;\n" );
+				continue;
+			}
 			int const count_available
 				= current_warrior.available_ability_vector.size();
 			int const selection_ability
 				= rand() % count_available;
 			fprintf( f
-					, "enemy selected: %d"
+					, "; selected: %d;"
 					, selection_ability);
 			size_t sel_id = (size_t)selection_ability;
 			const Ability &selected_ability_enemy
 				= current_warrior.ref_available_id((size_t)sel_id);
 			selected_ability_enemy.fprint(f);
 			fprintf( f , "\n" );
+			const Ability & ref_ability = player_warrior.ref_available_id(sel_id);
+			CombatEntity &target
+				= get_target_of_ability(
+						current_warrior
+						,player_warrior
+						,ref_ability);
 			AbilityResult const result
 				= current_warrior.roll_ability_id(
 						sel_id
 						,target );
 			result.fprint( f );
-			fprintf( f , "\n" );
 			target.apply_ability_result( result );
+			fprintf( f , "\n" );
 		}
 
 
 		fprintf( f , "\n\n  (ending round %d)\n" , round );
-		fprintf( f , "(enemy" );
+		fprintf( f , "(enemy " );
+		size_t enemy_index = 0;
 		for( auto &e : enemy_warriors ) {
+			fprintf( f , "(%zu " , enemy_index );
 			e.post_round(f);
+			fprintf( f , ")" );
+			++enemy_index;
 		}
 		fprintf( f , ")\n" );
 		fprintf( f , "(you" );
@@ -1934,19 +2018,9 @@ void fight_versus_vectors(
 		}
 		fprintf( f , ")\n" );
 		/* conditions for game ending */
-		bool is_enemy_alive = false;
-		bool is_player_alive = false;
+		bool is_enemy_alive  = vector_combat_entity_is_anyone_alive(enemy_warriors);
+		bool is_player_alive = vector_combat_entity_is_anyone_alive(player_warriors);
 		bool is_finished = false;
-		for( auto &e : enemy_warriors ) {
-			if( e.is_alive ) {
-				is_enemy_alive = true;
-			}
-		}
-		for( auto &e : player_warriors ) {
-			if( e.is_alive ) {
-				is_player_alive = true;
-			}
-		}
 		if( !is_enemy_alive ) {
 			fprintf( f , "(enemy lost)" );
 			is_finished = true;
@@ -1985,6 +2059,24 @@ fight_against_one_enemy(
 			);
 }
 
+
+
+void
+fight_against_two_enemy(
+		 FILE * f
+		,std::vector<CombatEntity> &player_warriors ) {
+	std::vector< CombatEntity >
+		enemy_warriors
+		= {
+			CombatEntity() ,
+			CombatEntity() ,
+		};
+	fight_versus_vectors(
+			f
+			,player_warriors
+			,enemy_warriors
+			);
+}
 
 
 
@@ -2027,23 +2119,38 @@ minigame_combat( FILE * f ) {
 		/* 2 */ "(todo) fight against 2 enemies" ,
 	};
 
-	int selection_main_menu
-		= select_fprint_vector_of_strings(
-			f , vec_selections_main_menu);
+	bool minigame_on = true;
+	while( minigame_on ) {
+		fprint_vector_of_strings(f , vec_selections_main_menu);
+		fprintf( f , "-1 to exit. input number: " );
+		SelectionResult selection_result_main_menu = SelectionResult();
+		int selection_main_menu = selection_result_main_menu.get_integer();
+		switch(selection_main_menu) {
+			case -1:
+				fprintf( f , "exiting\n" );
+				minigame_on = false;
+				goto jump_end;
+				break;
+			case 0:
+				fprintf( f , "    your character:\n" );
+				you.fprint(f);
+				fprintf( f , "\n  available abilities:\n" );
+				you.fprint_available_abilities(f);
+				break;
+			case 1:
+				fight_against_one_enemy( f , player.vector_warriors );
+				break;
+			case 2:
+				fight_against_two_enemy( f , player.vector_warriors );
+				break;
+			default:
+				fprintf(f , "unimplemented %d" , selection_main_menu);
+		};
+	}
 
-	switch(selection_main_menu) {
-		case 0:
-			fprintf( f , "    your character:\n" );
-			you.fprint(f);
-			fprintf( f , "\n  available abilities:\n" );
-			you.fprint_available_abilities(f);
-			break;
-		case 1:
-			fight_against_one_enemy( f , player.vector_warriors );
-			break;
-		default:
-			fprintf(f , "unimplemented %d" , selection_main_menu);
-	};
+
+jump_end:
+	return;
 }
 
 

@@ -16,6 +16,7 @@ SelectionResult::SelectionResult() {
 }
 
 
+
 void
 SelectionResult::fprint(FILE * f) const {
 	switch(type) {
